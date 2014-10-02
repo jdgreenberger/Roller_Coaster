@@ -18,7 +18,7 @@ int g_iLeftMouseButton = 0;    /* 1 if pressed, 0 if not */
 int g_iMiddleMouseButton = 0;
 int g_iRightMouseButton = 0;
 Pic * g_pHeightData;
-GLuint texName;
+static GLuint texName;
 string fileName;
 
 typedef enum { ROTATE, TRANSLATE, SCALE} CONTROLSTATE;
@@ -66,12 +66,24 @@ struct point CatmullRoll(float t, struct point p1, struct point p2, struct point
 	return v;
 }
 
-struct point catmullRom (float t, point p1, point p2, point p3, point p4){
-    point u;
+struct point CatmullRollDeriv(float t, struct point p1, struct point p2, struct point p3, struct point p4)
+{
     
-//    u.x = (p1.x + p2.x * t + p3.x * t^2 + p4.x)
+	float t2 = t*t;
+	float t3 = t*t*t;
+	struct point v; // Interpolated point
     
-    return u;
+	/* Catmull Rom spline Calculation */
+    
+	v.x = ((-3*t2 + 4*t-1)*(p1.x) + (9*t2-10*t)*(p2.x) + (-9*t2+8*t+1)* (p3.x) + (3*t2-2*t)*(p4.x))/2;
+    v.y = ((-3*t2 + 4*t-1)*(p1.y) + (9*t2-10*t)*(p2.y) + (-9*t2+8*t+1)* (p3.y) + (3*t2-2*t)*(p4.y))/2;
+    v.z = ((-3*t2 + 4*t-1)*(p1.z) + (9*t2-10*t)*(p2.z) + (-9*t2+8*t+1)* (p3.z) + (3*t2-2*t)*(p4.z))/2;
+
+    //Tangent normal computed by diving by length
+    v.x /= p3.x-p2.x;
+    v.y /= p3.y-p2.y;
+    v.z /= p3.z-p2.z;
+	return v;
 }
 
 /* the spline array */
@@ -80,13 +92,15 @@ struct spline *g_Splines;
 /* total number of splines */
 int g_iNumOfSplines;
 
-void myinit(char ** argv)
+void myinit()
 {
+     glClearColor (0.0, 0.0, 0.0, 0.0);
+     glEnable(GL_DEPTH_TEST);            // enable depth buffering
+    
     /* setup gl view here */
     glShadeModel(GL_SMOOTH); //Set shader mode to smooth
   
     /* Texture Mapping Setup */
-    
     glGenTextures(1, &texName);
     glBindTexture(GL_TEXTURE_2D, texName);
     
@@ -100,9 +114,10 @@ void myinit(char ** argv)
                     GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                     GL_LINEAR);
+    
     // load image data stored at pointer “pointerToImage” into the currently active texture (“texName”)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, argv[1]);
+                 GL_RGBA, GL_UNSIGNED_BYTE, g_pHeightData);
 }
 
 void setImagePixel (int x, int y, float image_height, float image_width){
@@ -119,8 +134,8 @@ void setImagePixel (int x, int y, float image_height, float image_width){
  //   cout << " x= " << (float) x/image_height << " y = " << (float) y/image_height << endl;
   //  cout << " x= " << x << " y = " << y << endl;
     cout.flush();
- //   glTexCoord2f((float) x/image_height, 1-(float) y/image_height);
-    glColor3f(colorRed, colorGreen, colorBlue);
+    glTexCoord2f((float) x/image_height, (float) y/image_height);
+ //   glColor3f(colorRed, colorGreen, colorBlue);
     glVertex3f(xImage, 0, yImage);
 }
 
@@ -153,7 +168,7 @@ void display()
             counter++;
         }
         else {
-            tVal += 0.1;
+            tVal += 0.05;
         }
         
         p1 = g_Splines[0].points[counter];
@@ -169,10 +184,15 @@ void display()
         yEye = v1.y;
         zEye = v1.z;
         
-        int xSlope = (v2.x-v1.x);
-        int zSlope = (v2.z-v1.z);
-        xCenter = v1.x + xSlope*10;
-        zCenter = v1.z + zSlope*10;
+        point tanV = CatmullRollDeriv(tVal, p1, p2, p3, p4);
+        xCenter = tanV.x * 10;
+        zCenter = tanV.x * 10;
+        
+//        int xSlope = (v2.x-v1.x);
+//        int zSlope = (v2.z-v1.z);
+//        xCenter = v1.x + xSlope*10;
+//        zCenter = v1.z + zSlope*10;
+        
     }
 
     glLineWidth(5);
@@ -208,24 +228,35 @@ void display()
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     glEnable(GL_TEXTURE_2D);
     
-    for (int y = 0; y < image_height-1; y++){   //from top of image to bottom
-        glBegin(GL_TRIANGLE_STRIP);             //draw triangle strip for every row
-        for (int x = 0; x < image_width; x++){  //from left of image to right
-            //draw half triangle from last (x, y) and (x, y+1)
-            setImagePixel(x, y, image_height, image_width);
-            //draw second triangle (complete the square)
-            setImagePixel(x, y+1, image_height, image_width);
-        }
-        glEnd();
-    }
+//    for (int y = 0; y < image_height-1; y++){   //from top of image to bottom
+//        glBegin(GL_TRIANGLE_STRIP);             //draw triangle strip for every row
+//        for (int x = 0; x < image_width; x++){  //from left of image to right
+//            //draw half triangle from last (x, y) and (x, y+1)
+//            setImagePixel(x, y, image_height, image_width);
+//            //draw second triangle (complete the square)
+//            setImagePixel(x, y+1, image_height, image_width);
+//        }
+//        glEnd();
+//    }
     
 //    glBegin(GL_QUADS);
-//    glTexCoord2f(0.0, 1.0); glVertex3f(-15, 0, 30);
-//    glTexCoord2f(0.0, 0.0); glVertex3f(-15, 0, 15);
-//    glTexCoord2f(1.0, 0.0); glVertex3f(15, 0, 15);
-//    glTexCoord2f(1.0, 1.0); glVertex3f(15, 0, 30);
+//    glTexCoord2f(0.0, 1.0); glVertex3f(-15.0, 0.0, 30.0);
+//    glTexCoord2f(0.0, 0.0); glVertex3f(-15.0, 0.0, 15.0);
+//    glTexCoord2f(1.0, 0.0); glVertex3f(15.0, 0.0, 15.0);
+//    glTexCoord2f(1.0, 1.0); glVertex3f(15.0, 0.0, 30.0);
 //    glEnd();
-    
+
+//    for (float i = 0; i < 256; i++){
+//        for (float j = 0; j < 256; j++){
+//            glBegin(GL_QUADS);
+//            glTexCoord2f(i/256, j/256); glVertex3f(i, 0.0, j);
+//            glTexCoord2f(i/256, (j+1)/256); glVertex3f(i, 0.0, j+1);
+//            glTexCoord2f((i+1)/256, (j+1)/256); glVertex3f(i+1.0, 0.0, j+1);
+//            glTexCoord2f((i+1)/256, j/256); glVertex3f(i+1.0, 0.0, j);
+//            glEnd();
+//        }
+//    }
+
     glDisable(GL_TEXTURE_2D);
     
     glutSwapBuffers(); // double buffer flush
@@ -434,7 +465,8 @@ int main (int argc, char ** argv)
     glutCreateWindow(argv[0]);
     
     /* do initialization */
-    myinit(argv);
+    myinit();
+    
     // GLUT callbacks
     
     /* tells glut to use a particular display function to redraw */
@@ -459,9 +491,6 @@ int main (int argc, char ** argv)
     
     //Callback for keyboard input
     glutKeyboardFunc(keyboard);
-    
-    
-    glEnable(GL_DEPTH_TEST);            // enable depth buffering
   
   glutMainLoop();
     return(0);
