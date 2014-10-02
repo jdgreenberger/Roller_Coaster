@@ -163,7 +163,7 @@ void display()
     struct point p1,p2,p3,p4,p5;
 
     if (playCoaster){
-        if (tVal >= 1){
+        if (tVal >= 0.95){
             tVal = 0;
             counter++;
         }
@@ -175,23 +175,34 @@ void display()
         p2 = g_Splines[0].points[counter+1];
         p3 = g_Splines[0].points[counter+2];
         p4 = g_Splines[0].points[counter+3];
-        p5 = g_Splines[0].points[counter+4];
+     //   p5 = g_Splines[0].points[counter+4];
         
         v1 = CatmullRoll(tVal,p1,p2,p3,p4);
-        v2 = CatmullRoll(tVal,p2,p3,p4,p5);
+      //  v2 = CatmullRoll(tVal,p2,p3,p4,p5);
+        
+        v2 = CatmullRoll(tVal + 0.05, p1, p2, p3, p4);
         
         xEye = v1.x;
         yEye = v1.y;
         zEye = v1.z;
         
-        point tanV = CatmullRollDeriv(tVal, p1, p2, p3, p4);
-        xCenter = tanV.x * 10;
-        zCenter = tanV.x * 10;
+//        point tanV = CatmullRollDeriv(tVal, p1, p2, p3, p4);
+//        xCenter = tanV.x * 10;
+//        zCenter = tanV.x * 10;
+//        
+//        cout << "p2.x = " << p2.x << " p3.x" << p3.x << " tan = " << tanV.x << endl;
+//        cout.flush();
         
-//        int xSlope = (v2.x-v1.x);
-//        int zSlope = (v2.z-v1.z);
-//        xCenter = v1.x + xSlope*10;
-//        zCenter = v1.z + zSlope*10;
+        float xSlope = (v2.x-v1.x);
+        float ySlope = (v2.y-v1.y);
+        float zSlope = (v2.z-v1.z);
+        
+//        cout << v1.x << " " << v2.x << " " << xSlope << endl;
+//        cout.flush();
+        
+        xCenter = v1.x + xSlope*10;
+        yCenter = v1.y + ySlope*10;
+        zCenter = v1.z + zSlope*10;
         
     }
 
@@ -287,7 +298,7 @@ int loadSplines(char *argv) {
         i = 0;
         fscanf(fileList, "%s", cName);
         fileSpline = fopen(cName, "r");
-        fileSpline = fopen("/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/splines/leftturn.sp", "r");
+        fileSpline = fopen("/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/splines/myCoaster.sp", "r");
         
         if (fileSpline == NULL) {
             printf ("can't open file\n");
