@@ -19,6 +19,7 @@ int g_iMiddleMouseButton = 0;
 int g_iRightMouseButton = 0;
 Pic * g_pHeightData;
 static GLuint texName;
+GLuint texture[1];
 string fileName;
 
 typedef enum { ROTATE, TRANSLATE, SCALE} CONTROLSTATE;
@@ -92,17 +93,13 @@ struct spline *g_Splines;
 /* total number of splines */
 int g_iNumOfSplines;
 
-void myinit()
+void texload(int i,char *filename)
 {
-     glClearColor (0.0, 0.0, 0.0, 0.0);
-     glEnable(GL_DEPTH_TEST);            // enable depth buffering
-    
-    /* setup gl view here */
-    glShadeModel(GL_SMOOTH); //Set shader mode to smooth
-  
     /* Texture Mapping Setup */
-    glGenTextures(1, &texName);
-    glBindTexture(GL_TEXTURE_2D, texName);
+
+    Pic* img;
+    img = jpeg_read(filename, NULL);
+    glBindTexture(GL_TEXTURE_2D, texture[i]);
     
     // specify texture parameters (they affect whatever texture is active)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -114,28 +111,34 @@ void myinit()
                     GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                     GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB,
+                 img->nx,
+                 img->ny,
+                 0, 
+                 GL_RGB, 
+                 GL_UNSIGNED_BYTE, 
+                 &img->pix[0]); 
+    pic_free(img); 
+}
+
+void myinit()
+{
+    glClearColor (0.0, 0.0, 0.0, 0.0);
+    glEnable(GL_DEPTH_TEST);            // enable depth buffering
     
-    // load image data stored at pointer “pointerToImage” into the currently active texture (“texName”)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, g_pHeightData);
+    /* setup gl view here */
+    glShadeModel(GL_SMOOTH); //Set shader mode to smooth
 }
 
 void setImagePixel (int x, int y, float image_height, float image_width){
-    //Take color from img file, normalize value and scale for visibility
-    float colorRed = PIC_PIXEL(g_pHeightData, x, y, 0)/image_height;
-    float colorGreen = PIC_PIXEL(g_pHeightData, x, y, 1)/image_height;
-    float colorBlue = PIC_PIXEL(g_pHeightData, x, y, 2)/image_height;
-    
     //xImage & yImage are coordinates we want to project.
     //Adjusted in negative direction to center on screen
     float xImage = ((float)x - image_width/2)/image_width * 50;
     float yImage = (((float)y - image_height/2)/image_height * 50);
   
- //   cout << " x= " << (float) x/image_height << " y = " << (float) y/image_height << endl;
-  //  cout << " x= " << x << " y = " << y << endl;
-    cout.flush();
     glTexCoord2f((float) x/image_height, (float) y/image_height);
- //   glColor3f(colorRed, colorGreen, colorBlue);
     glVertex3f(xImage, 0, yImage);
 }
 
@@ -150,7 +153,7 @@ void display()
     glLoadIdentity();
     //Set viewer, object, and camera perspective
     
-    gluLookAt( xEye, yEye+8, zEye, xCenter, yCenter, zCenter, 0.0, 1.0, 0.0);
+    gluLookAt( xEye, yEye+3, zEye, xCenter, yCenter, zCenter, 0.0, 1.0, 0.0);
     
     glScalef(g_vLandScale[0], g_vLandScale[1], g_vLandScale[2]);    //scale based on x, y, z values
     glTranslatef(g_vLandTranslate[0], g_vLandTranslate[1], g_vLandTranslate[2]); //translate object
@@ -163,12 +166,12 @@ void display()
     struct point p1,p2,p3,p4,p5;
 
     if (playCoaster){
-        if (tVal >= 0.95){
+        if (tVal >= 0.97){
             tVal = 0;
             counter++;
         }
         else {
-            tVal += 0.05;
+            tVal += 0.03;
         }
         
         p1 = g_Splines[0].points[counter];
@@ -180,7 +183,7 @@ void display()
         v1 = CatmullRoll(tVal,p1,p2,p3,p4);
       //  v2 = CatmullRoll(tVal,p2,p3,p4,p5);
         
-        v2 = CatmullRoll(tVal + 0.05, p1, p2, p3, p4);
+        v2 = CatmullRoll(tVal + 0.03, p1, p2, p3, p4);
         
         xEye = v1.x;
         yEye = v1.y;
@@ -200,10 +203,9 @@ void display()
 //        cout << v1.x << " " << v2.x << " " << xSlope << endl;
 //        cout.flush();
         
-        xCenter = v1.x + xSlope*10;
+        xCenter = v1.x + xSlope*30;
         yCenter = v1.y + ySlope*10;
-        zCenter = v1.z + zSlope*10;
-        
+        zCenter = v1.z + zSlope*30;
     }
 
     glLineWidth(5);
@@ -227,35 +229,30 @@ void display()
 //        glVertex3f(g_Splines[0].points[i].x,g_Splines[0].points[i].y, g_Splines[0].points[i].z);
 //        glVertex3f(g_Splines[0].points[i+1].x,g_Splines[0].points[i+1].y, g_Splines[0].points[i+1].z);
     }
+    glColor3d(1.0, 1.0, 1.0);
      glEnd();
     
     /* Draw Ground */
     
-    int image_height = g_pHeightData->nx;
-    int image_width = g_pHeightData->ny;
-    //Read Image
-    //Using GL Triange strip, which draws triangle based on last two points
+//    int image_height = g_pHeightData->nx;
+ //   int image_width = g_pHeightData->ny;
+  
     
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     glEnable(GL_TEXTURE_2D);
-    
-//    for (int y = 0; y < image_height-1; y++){   //from top of image to bottom
-//        glBegin(GL_TRIANGLE_STRIP);             //draw triangle strip for every row
-//        for (int x = 0; x < image_width; x++){  //from left of image to right
-//            //draw half triangle from last (x, y) and (x, y+1)
-//            setImagePixel(x, y, image_height, image_width);
-//            //draw second triangle (complete the square)
-//            setImagePixel(x, y+1, image_height, image_width);
-//        }
-//        glEnd();
-//    }
-    
-//    glBegin(GL_QUADS);
-//    glTexCoord2f(0.0, 1.0); glVertex3f(-15.0, 0.0, 30.0);
-//    glTexCoord2f(0.0, 0.0); glVertex3f(-15.0, 0.0, 15.0);
-//    glTexCoord2f(1.0, 0.0); glVertex3f(15.0, 0.0, 15.0);
-//    glTexCoord2f(1.0, 1.0); glVertex3f(15.0, 0.0, 30.0);
-//    glEnd();
+    glBindTexture(GL_TEXTURE_2D, texture[0]);
+    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+
+    for (int x = -300; x <= 380; x = x+20){
+        for (int y = -300; y <=380; y = y+20){
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x, 0.0, y+20);
+            glTexCoord2f(0.0, 0.0); glVertex3f(x, 0.0, y);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x+20, 0.0, y);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, 0.0, y+20);
+            glEnd();
+        }
+    }
+   
 
 //    for (float i = 0; i < 256; i++){
 //        for (float j = 0; j < 256; j++){
@@ -459,12 +456,12 @@ int main (int argc, char ** argv)
         exit(1);
     }
     
-    g_pHeightData = jpeg_read(argv[1], NULL);
-    if (!g_pHeightData)
-    {
-        printf ("error reading %s.\n", argv[1]);
-        exit(1);
-    }
+//    g_pHeightData = jpeg_read(argv[1], NULL);
+//    if (!g_pHeightData)
+//    {
+//        printf ("error reading %s.\n", argv[1]);
+//        exit(1);
+//    }
     loadSplines(argv[1]);
    
     glutInit(&argc,argv);
@@ -476,7 +473,11 @@ int main (int argc, char ** argv)
     glutCreateWindow(argv[0]);
     
     /* do initialization */
-    myinit();
+    
+    glGenTextures(1, texture);
+    texload(0,argv[1]);
+    
+        myinit();
     
     // GLUT callbacks
     
