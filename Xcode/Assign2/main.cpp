@@ -19,7 +19,7 @@ int g_iMiddleMouseButton = 0;
 int g_iRightMouseButton = 0;
 Pic * g_pHeightData;
 static GLuint texName;
-GLuint texture[1];
+GLuint texture[5];
 string fileName;
 
 typedef enum { ROTATE, TRANSLATE, SCALE} CONTROLSTATE;
@@ -30,6 +30,7 @@ float g_vLandRotate[3] = {0.0, 0.0, 0.0};
 float g_vLandTranslate[3] = {0.0, 0.0, 0.0};
 float g_vLandScale[3] = {1.0, 1.0, 1.0};
 bool playCoaster = false;
+float heightmap [20] = {0.0, 3.0, 5.0, -4.0, 4.0, 2.0, 0.0, 3.0, 2.0, -1.0};
 float xEye = -50.0;
 float yEye = 0.0;
 float zEye = 20.0;
@@ -233,11 +234,6 @@ void display()
      glEnd();
     
     /* Draw Ground */
-    
-//    int image_height = g_pHeightData->nx;
- //   int image_width = g_pHeightData->ny;
-  
-    
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, texture[0]);
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
@@ -245,25 +241,28 @@ void display()
     for (int x = -300; x <= 380; x = x+20){
         for (int y = -300; y <=380; y = y+20){
             glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(x, 0.0, y+20);
-            glTexCoord2f(0.0, 0.0); glVertex3f(x, 0.0, y);
-            glTexCoord2f(1.0, 0.0); glVertex3f(x+20, 0.0, y);
-            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, 0.0, y+20);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x, -5.0, y+20);
+            glTexCoord2f(0.0, 0.0); glVertex3f(x, -5.0, y);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x+20, -5.0, y);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, -5.0, y+20);
             glEnd();
         }
     }
-   
-
-//    for (float i = 0; i < 256; i++){
-//        for (float j = 0; j < 256; j++){
-//            glBegin(GL_QUADS);
-//            glTexCoord2f(i/256, j/256); glVertex3f(i, 0.0, j);
-//            glTexCoord2f(i/256, (j+1)/256); glVertex3f(i, 0.0, j+1);
-//            glTexCoord2f((i+1)/256, (j+1)/256); glVertex3f(i+1.0, 0.0, j+1);
-//            glTexCoord2f((i+1)/256, j/256); glVertex3f(i+1.0, 0.0, j);
-//            glEnd();
-//        }
-//    }
+    
+    /* Draw Sky */
+    glBindTexture(GL_TEXTURE_2D, texture[1]);
+    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+    
+    for (int x = -300; x <= 380; x = x+20){
+        for (int y = -300; y <=380; y = y+20){
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x, 100.0, y+20);
+            glTexCoord2f(0.0, 0.0); glVertex3f(x, 100.0, y);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x+20, 100.0, y);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, 100.0, y+20);
+            glEnd();
+        }
+    }
 
     glDisable(GL_TEXTURE_2D);
     
@@ -476,6 +475,7 @@ int main (int argc, char ** argv)
     
     glGenTextures(1, texture);
     texload(0,argv[1]);
+    texload(1,argv[2]);
     
         myinit();
     
