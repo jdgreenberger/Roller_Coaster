@@ -9,6 +9,7 @@
 #include <OpenGL/glu.h>
 #include <GLUT/glut.h>
 #include "pic.h"
+#include "math.h"
 #include <iostream>
 using namespace std;
 
@@ -25,25 +26,22 @@ string fileName;
 typedef enum { ROTATE, TRANSLATE, SCALE} CONTROLSTATE;
 CONTROLSTATE g_ControlState = ROTATE;
 
-/* state of the world */
-float g_vLandRotate[3] = {0.0, 0.0, 0.0};
-float g_vLandTranslate[3] = {0.0, 0.0, 0.0};
-float g_vLandScale[3] = {1.0, 1.0, 1.0};
-bool playCoaster = false;
-float heightmap [20] = {0.0, 3.0, 5.0, -4.0, 4.0, 2.0, 0.0, 3.0, 2.0, -1.0};
-float xEye = -50.0;
-float yEye = 0.0;
-float zEye = 20.0;
-float xCenter = 0.0;
-float yCenter = 0.0;
-float zCenter = 20.0;
-
 /* represents one control point along the spline */
 struct point {
     double x;
     double y;
     double z;
 };
+
+/* state of the world */
+float g_vLandRotate[3] = {0.0, 0.0, 0.0};
+float g_vLandTranslate[3] = {0.0, 0.0, 0.0};
+float g_vLandScale[3] = {1.0, 1.0, 1.0};
+bool playCoaster = false;
+float heightmap [20] = {0.0, 3.0, 5.0, -4.0, 4.0, 2.0, 0.0, 3.0, 2.0, -1.0};
+struct point eyePoint;
+struct point centerPoint;
+struct point upVector;
 
 /* spline struct which contains how many control points, and an array of control points */
 struct spline {
@@ -131,6 +129,17 @@ void myinit()
     
     /* setup gl view here */
     glShadeModel(GL_SMOOTH); //Set shader mode to smooth
+    
+    //Initial LookAt View
+    
+    //Up Vector
+    upVector.x = 0.0; upVector.y = 1.0; upVector.z = 0.0;
+    
+    //Eye Point
+    eyePoint.x = -50.0; eyePoint.y = 0.0; eyePoint.z = 20.0;
+    
+    //Center Point
+    centerPoint.x = 0.0; centerPoint.y = 0.0; centerPoint.z = 20.0;
 }
 
 void setImagePixel (int x, int y, float image_height, float image_width){
@@ -143,6 +152,87 @@ void setImagePixel (int x, int y, float image_height, float image_width){
     glVertex3f(xImage, 0, yImage);
 }
 
+void drawScene (){
+    /* Draw Ground */
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture[0]);
+    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
+    
+    for (int x = -300; x <= 280; x = x+20){
+        for (int y = -300; y <=280; y = y+20){
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x, 0.0, y+20);
+            glTexCoord2f(0.0, 0.0); glVertex3f(x, 0.0, y);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x+20, 0.0, y);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, 0.0, y+20);
+            glEnd();
+        }
+    }
+    
+    /* Draw Top Sky */
+    glBindTexture(GL_TEXTURE_2D, texture[1]);
+    
+    for (int x = -300; x <= 280; x = x+20){
+        for (int y = -300; y <=280; y = y+20){
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x, 100.0, y+20);
+            glTexCoord2f(0.0, 0.0); glVertex3f(x, 100.0, y);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x+20, 100.0, y);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, 100.0, y+20);
+            glEnd();
+        }
+    }
+    
+    /* Draw Back Sky */
+    for (int x = -300; x <= 280; x = x+20){
+        for (int y = 0; y <=80; y = y+20){
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x+20, y, -300);
+            glTexCoord2f(0.0, 0.0); glVertex3f(x, y, -300);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x, y+20, -300);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, y+20, -300);
+            glEnd();
+        }
+    }
+    
+    /* Draw Front Sky */
+    for (int x = -300; x <= 280; x = x+20){
+        for (int y = 0; y <=80; y = y+20){
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x+20, y, 300);
+            glTexCoord2f(0.0, 0.0); glVertex3f(x, y, 300);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x, y+20, 300);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, y+20, 300);
+            glEnd();
+        }
+    }
+    
+    /* Draw Left Sky */
+    for (int x = -300; x <= 280; x = x+20){
+        for (int y = 0; y <=80; y = y+20){
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 1.0); glVertex3f(-300, y+20, x);
+            glTexCoord2f(0.0, 0.0); glVertex3f(-300, y, x);
+            glTexCoord2f(1.0, 0.0); glVertex3f(-300, y, x+20);
+            glTexCoord2f(1.0, 1.0); glVertex3f(-300, y+20, x+20);
+            glEnd();
+        }
+    }
+    
+    /* Draw Right Sky */
+    for (int x = -300; x <= 280; x = x+20){
+        for (int y = 0; y <=80; y = y+20){
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 1.0); glVertex3f(300, y+20, x);
+            glTexCoord2f(0.0, 0.0); glVertex3f(300, y, x);
+            glTexCoord2f(1.0, 0.0); glVertex3f(300, y, x+20);
+            glTexCoord2f(1.0, 1.0); glVertex3f(300, y+20, x+20);
+            glEnd();
+        }
+    }
+    
+    glDisable(GL_TEXTURE_2D);
+}
 float tVal = 0;
 int counter = 0;
 
@@ -154,7 +244,7 @@ void display()
     glLoadIdentity();
     //Set viewer, object, and camera perspective
     
-    gluLookAt( xEye, yEye+3, zEye, xCenter, yCenter, zCenter, 0.0, 1.0, 0.0);
+    gluLookAt( eyePoint.x, eyePoint.y+3, eyePoint.z, centerPoint.x, centerPoint.y, centerPoint.z, upVector.x, upVector.y, upVector.z);
     
     glScalef(g_vLandScale[0], g_vLandScale[1], g_vLandScale[2]);    //scale based on x, y, z values
     glTranslatef(g_vLandTranslate[0], g_vLandTranslate[1], g_vLandTranslate[2]); //translate object
@@ -164,15 +254,60 @@ void display()
 
     float t;
     struct point v1, v2;	//Interpolated point
-    struct point p1,p2,p3,p4,p5;
+    struct point p1,p2,p3,p4;
+    struct point normal, binormal, tangent;
+    float vectorLength;
+    
+    if (counter == 0){
+        //Starting normal vector is calculated from tangent vector and arbitrary starting Vector V
+        struct point startV;
+        startV.x = 1;  startV.y = 1;  startV.z = 1;
+        
+        //Tangent Vector Computation ... Using first two points of the spline
+        tangent.x = g_Splines[0].points[1].x - g_Splines[0].points[0].x;
+        tangent.y = g_Splines[0].points[1].y - g_Splines[0].points[0].y;
+        tangent.z = g_Splines[0].points[1].z - g_Splines[0].points[0].z;
+        vectorLength = sqrt(tangent.x * tangent.x + tangent.y * tangent.y + tangent.z * tangent.z);
+        tangent.x = tangent.x/vectorLength;       //normalize
+        tangent.y = tangent.y/vectorLength;       //normalize
+        tangent.z = tangent.z/vectorLength;       //normalize
+        
+        //Normal Vector Computation
+        normal.x = tangent.x * startV.x;
+        normal.y = tangent.y * startV.y;
+        normal.z = tangent.z * startV.z;
+        vectorLength = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+        normal.x = normal.x/vectorLength;       //normalize
+        normal.y = normal.y/vectorLength;       //normalize
+        normal.z = normal.z/vectorLength;       //normalize
+        
+//        normal.x = 0.0;
+//        normal.y = 1.0;
+//        normal.z = 0.0;
+        
+        //Binormal Vector Computation
+        binormal.x = tangent.x * normal.x;
+        binormal.y = tangent.y * normal.y;
+        binormal.z = tangent.z * normal.z;
+        vectorLength = sqrt(binormal.x * binormal.x + binormal.y * binormal.y + binormal.z * binormal.z);
+        binormal.x = binormal.x/vectorLength;       //normalize
+        binormal.y = binormal.y/vectorLength;       //normalize
+        binormal.z = binormal.z/vectorLength;       //normalize
+    }
 
+    drawScene();
+    
     if (playCoaster){
-        if (tVal >= 0.97){
+        if (tVal >= 0.98){
             tVal = 0;
             counter++;
+//            cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
+//            cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
+//            cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl;
+//            cout.flush();
         }
         else {
-            tVal += 0.03;
+            tVal += 0.02;
         }
         
         p1 = g_Splines[0].points[counter];
@@ -184,29 +319,51 @@ void display()
         v1 = CatmullRoll(tVal,p1,p2,p3,p4);
       //  v2 = CatmullRoll(tVal,p2,p3,p4,p5);
         
-        v2 = CatmullRoll(tVal + 0.03, p1, p2, p3, p4);
+        v2 = CatmullRoll(tVal + 0.02, p1, p2, p3, p4);
         
-        xEye = v1.x;
-        yEye = v1.y;
-        zEye = v1.z;
+        eyePoint.x = v1.x;
+        eyePoint.y = v1.y;
+        eyePoint.z = v1.z;
         
-//        point tanV = CatmullRollDeriv(tVal, p1, p2, p3, p4);
-//        xCenter = tanV.x * 10;
-//        zCenter = tanV.x * 10;
-//        
-//        cout << "p2.x = " << p2.x << " p3.x" << p3.x << " tan = " << tanV.x << endl;
-//        cout.flush();
+        //Tangent Vector Computation ... Using first two points of the spline
+        tangent.x = v2.x - v1.x;
+        tangent.y = v2.y - v1.y;
+        tangent.z = v2.z - v1.z;
+        vectorLength = sqrt(tangent.x * tangent.x + tangent.y * tangent.y + tangent.z * tangent.z);
+        tangent.x = tangent.x/vectorLength;       //normalize
+        tangent.y = tangent.y/vectorLength;       //normalize
+        tangent.z = tangent.z/vectorLength;       //normalize
+
+        cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
+        cout.flush();
         
-        float xSlope = (v2.x-v1.x);
-        float ySlope = (v2.y-v1.y);
-        float zSlope = (v2.z-v1.z);
+        centerPoint.x = v1.x + tangent.x*10;
+        centerPoint.y = v1.y + tangent.y*10;
+        centerPoint.z = v1.z + tangent.z*10;
         
-//        cout << v1.x << " " << v2.x << " " << xSlope << endl;
-//        cout.flush();
+        //Compute new up vector (normal vector) based on previous vector
         
-        xCenter = v1.x + xSlope*30;
-        yCenter = v1.y + ySlope*10;
-        zCenter = v1.z + zSlope*30;
+        //Normal Vector Computation
+        normal.x = tangent.x * binormal.x;
+        normal.y = tangent.y * binormal.y;
+        normal.z = tangent.z * binormal.z;
+        vectorLength = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+        normal.x = normal.x/vectorLength;       //normalize
+        normal.y = normal.y/vectorLength;       //normalize
+        normal.z = normal.z/vectorLength;       //normalize
+        
+        //Binormal Vector Computation
+        binormal.x = tangent.x * normal.x;
+        binormal.y = tangent.y * normal.y;
+        binormal.z = tangent.z * normal.z;
+        vectorLength = sqrt(binormal.x * binormal.x + binormal.y * binormal.y + binormal.z * binormal.z);
+        binormal.x = binormal.x/vectorLength;       //normalize
+        binormal.y = binormal.y/vectorLength;       //normalize
+        binormal.z = binormal.z/vectorLength;       //normalize
+        
+//        upVector.x = normal.x;
+//        upVector.y = normal.y;
+//        upVector.z = normal.z;
     }
 
     glLineWidth(5);
@@ -232,39 +389,6 @@ void display()
     }
     glColor3d(1.0, 1.0, 1.0);
      glEnd();
-    
-    /* Draw Ground */
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture[0]);
-    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-
-    for (int x = -300; x <= 380; x = x+20){
-        for (int y = -300; y <=380; y = y+20){
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(x, -5.0, y+20);
-            glTexCoord2f(0.0, 0.0); glVertex3f(x, -5.0, y);
-            glTexCoord2f(1.0, 0.0); glVertex3f(x+20, -5.0, y);
-            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, -5.0, y+20);
-            glEnd();
-        }
-    }
-    
-    /* Draw Sky */
-    glBindTexture(GL_TEXTURE_2D, texture[1]);
-    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-    
-    for (int x = -300; x <= 380; x = x+20){
-        for (int y = -300; y <=380; y = y+20){
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(x, 100.0, y+20);
-            glTexCoord2f(0.0, 0.0); glVertex3f(x, 100.0, y);
-            glTexCoord2f(1.0, 0.0); glVertex3f(x+20, 100.0, y);
-            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, 100.0, y+20);
-            glEnd();
-        }
-    }
-
-    glDisable(GL_TEXTURE_2D);
     
     glutSwapBuffers(); // double buffer flush
 }
