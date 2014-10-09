@@ -33,6 +33,16 @@ struct point {
     double z;
 };
 
+struct vector: public point{
+    static vector cross_product (vector v1, vector v2) {
+        vector v3;
+        v3.x = v1.y*v2.z - v1.z*v2.y;
+        v3.y = v2.x*v1.z - v1.x*v2.z;
+        v3.z = v1.x*v2.y - v1.y*v2.x;
+        return v3;
+    }
+};
+
 /* state of the world */
 float g_vLandRotate[3] = {0.0, 0.0, 0.0};
 float g_vLandTranslate[3] = {0.0, 0.0, 0.0};
@@ -66,25 +76,25 @@ struct point CatmullRoll(float t, struct point p1, struct point p2, struct point
 	return v;
 }
 
-struct point CatmullRollDeriv(float t, struct point p1, struct point p2, struct point p3, struct point p4)
-{
-    
-	float t2 = t*t;
-	float t3 = t*t*t;
-	struct point v; // Interpolated point
-    
-	/* Catmull Rom spline Calculation */
-    
-	v.x = ((-3*t2 + 4*t-1)*(p1.x) + (9*t2-10*t)*(p2.x) + (-9*t2+8*t+1)* (p3.x) + (3*t2-2*t)*(p4.x))/2;
-    v.y = ((-3*t2 + 4*t-1)*(p1.y) + (9*t2-10*t)*(p2.y) + (-9*t2+8*t+1)* (p3.y) + (3*t2-2*t)*(p4.y))/2;
-    v.z = ((-3*t2 + 4*t-1)*(p1.z) + (9*t2-10*t)*(p2.z) + (-9*t2+8*t+1)* (p3.z) + (3*t2-2*t)*(p4.z))/2;
-
-    //Tangent normal computed by diving by length
-    v.x /= p3.x-p2.x;
-    v.y /= p3.y-p2.y;
-    v.z /= p3.z-p2.z;
-	return v;
-}
+//struct point CatmullRollDeriv(float t, struct point p1, struct point p2, struct point p3, struct point p4)
+//{
+//    
+//	float t2 = t*t;
+//	float t3 = t*t*t;
+//	struct point v; // Interpolated point
+//    
+//	/* Catmull Rom spline Calculation */
+//    
+//	v.x = ((-3*t2 + 4*t-1)*(p1.x) + (9*t2-10*t)*(p2.x) + (-9*t2+8*t+1)* (p3.x) + (3*t2-2*t)*(p4.x))/2;
+//    v.y = ((-3*t2 + 4*t-1)*(p1.y) + (9*t2-10*t)*(p2.y) + (-9*t2+8*t+1)* (p3.y) + (3*t2-2*t)*(p4.y))/2;
+//    v.z = ((-3*t2 + 4*t-1)*(p1.z) + (9*t2-10*t)*(p2.z) + (-9*t2+8*t+1)* (p3.z) + (3*t2-2*t)*(p4.z))/2;
+//
+//    //Tangent normal computed by diving by length
+//    v.x /= p3.x-p2.x;
+//    v.y /= p3.y-p2.y;
+//    v.z /= p3.z-p2.z;
+//	return v;
+//}
 
 /* the spline array */
 struct spline *g_Splines;
@@ -243,6 +253,44 @@ void drawScene (){
 float tVal = 0;
 int counter = 0;
 
+void set_start_vector (point v1, point v2, vector tangent, vector normal, vector binormal){
+        //Starting normal vector is calculated from tangent vector and arbitrary starting Vector V
+        struct vector startV;
+        float vectorLength = 0;
+        startV.x = 1;  startV.y = 1;  startV.z = 1;
+        
+        //Tangent Vector Computation ... Using first two points of the spline
+        tangent.x = v2.x - v1.x;
+        tangent.y = v2.y - v1.y;
+        tangent.z = v2.z - v1.z;
+        vectorLength = sqrt(tangent.x * tangent.x + tangent.y * tangent.y + tangent.z * tangent.z);
+        tangent.x = tangent.x/vectorLength;       //normalize
+        tangent.y = tangent.y/vectorLength;       //normalize
+        tangent.z = tangent.z/vectorLength;       //normalize
+        
+        //Normal Vector Computation
+        normal.x = tangent.x * startV.x;
+        normal.y = tangent.y * startV.y;
+        normal.z = tangent.z * startV.z;
+        vectorLength = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+        normal.x = normal.x/vectorLength;       //normalize
+        normal.y = normal.y/vectorLength;       //normalize
+        normal.z = normal.z/vectorLength;       //normalize
+        
+        //        normal.x = 0.0;
+        //        normal.y = 1.0;
+        //        normal.z = 0.0;
+        
+        //Binormal Vector Computation
+        binormal.x = tangent.x * normal.x;
+        binormal.y = tangent.y * normal.y;
+        binormal.z = tangent.z * normal.z;
+        vectorLength = sqrt(binormal.x * binormal.x + binormal.y * binormal.y + binormal.z * binormal.z);
+        binormal.x = binormal.x/vectorLength;       //normalize
+        binormal.y = binormal.y/vectorLength;       //normalize
+        binormal.z = binormal.z/vectorLength;       //normalize
+}
+
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -262,46 +310,9 @@ void display()
     float t;
     struct point v1, v2;	//Interpolated point
     struct point p1,p2,p3,p4;
-    struct point normal, binormal, tangent;
+    struct vector normal, binormal, tangent;
     float vectorLength;
     
-    if (counter == 0){
-        //Starting normal vector is calculated from tangent vector and arbitrary starting Vector V
-        struct point startV;
-        startV.x = 1;  startV.y = 1;  startV.z = 1;
-        
-        //Tangent Vector Computation ... Using first two points of the spline
-        tangent.x = g_Splines[0].points[1].x - g_Splines[0].points[0].x;
-        tangent.y = g_Splines[0].points[1].y - g_Splines[0].points[0].y;
-        tangent.z = g_Splines[0].points[1].z - g_Splines[0].points[0].z;
-        vectorLength = sqrt(tangent.x * tangent.x + tangent.y * tangent.y + tangent.z * tangent.z);
-        tangent.x = tangent.x/vectorLength;       //normalize
-        tangent.y = tangent.y/vectorLength;       //normalize
-        tangent.z = tangent.z/vectorLength;       //normalize
-        
-        //Normal Vector Computation
-        normal.x = tangent.x * startV.x;
-        normal.y = tangent.y * startV.y;
-        normal.z = tangent.z * startV.z;
-        vectorLength = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-        normal.x = normal.x/vectorLength;       //normalize
-        normal.y = normal.y/vectorLength;       //normalize
-        normal.z = normal.z/vectorLength;       //normalize
-        
-//        normal.x = 0.0;
-//        normal.y = 1.0;
-//        normal.z = 0.0;
-        
-        //Binormal Vector Computation
-        binormal.x = tangent.x * normal.x;
-        binormal.y = tangent.y * normal.y;
-        binormal.z = tangent.z * normal.z;
-        vectorLength = sqrt(binormal.x * binormal.x + binormal.y * binormal.y + binormal.z * binormal.z);
-        binormal.x = binormal.x/vectorLength;       //normalize
-        binormal.y = binormal.y/vectorLength;       //normalize
-        binormal.z = binormal.z/vectorLength;       //normalize
-    }
-
     drawScene();
     
     if (playCoaster){
@@ -321,12 +332,12 @@ void display()
         p2 = g_Splines[0].points[counter+1];
         p3 = g_Splines[0].points[counter+2];
         p4 = g_Splines[0].points[counter+3];
-     //   p5 = g_Splines[0].points[counter+4];
-        
+    
         v1 = CatmullRoll(tVal,p1,p2,p3,p4);
-      //  v2 = CatmullRoll(tVal,p2,p3,p4,p5);
-        
         v2 = CatmullRoll(tVal + 0.02, p1, p2, p3, p4);
+        
+        if (counter == 0)
+            set_start_vector(v1, v2, tangent, normal, binormal);
         
         eyePoint.x = v1.x;
         eyePoint.y = v1.y;
@@ -388,17 +399,12 @@ void display()
         for(t=0;t<1;t+=0.02)
         {
             v1 = CatmullRoll(t,p1,p2,p3,p4);
-           // cout << v1.x << endl; cout.flush();
-          //  glVertex3f(v.x-15, v.z+1, v.y-15);
             glVertex3f(v1.x, v1.y+1, v1.z);
             
         }
-        
-//        glVertex3f(g_Splines[0].points[i].x,g_Splines[0].points[i].y, g_Splines[0].points[i].z);
-//        glVertex3f(g_Splines[0].points[i+1].x,g_Splines[0].points[i+1].y, g_Splines[0].points[i+1].z);
     }
     glColor3d(1.0, 1.0, 1.0);
-     glEnd();
+    glEnd();
     
     glutSwapBuffers(); // double buffer flush
 }
