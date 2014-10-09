@@ -269,17 +269,24 @@ void set_start_vector (point v1, point v2, vector tangent, vector &normal, vecto
         //Binormal Vector Computation
         binormal = vector::cross_product(tangent, normal);
         binormal.normalize();
+    
+    cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
+    cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
+    cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl<<endl;
+    cout.flush();
 }
 
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-     glEnable(GL_LINE_SMOOTH);
+    glEnable(GL_LINE_SMOOTH);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    //Set viewer, object, and camera perspective
     
-    gluLookAt( eyePoint.x, eyePoint.y+3, eyePoint.z, centerPoint.x, centerPoint.y, centerPoint.z, upVector.x, upVector.y, upVector.z);
+    //Set viewer, object, and camera perspective
+    gluLookAt( eyePoint.x, eyePoint.y+3, eyePoint.z,
+               centerPoint.x, centerPoint.y, centerPoint.z,
+               upVector.x, upVector.y, upVector.z);
     
     glScalef(g_vLandScale[0], g_vLandScale[1], g_vLandScale[2]);    //scale based on x, y, z values
     glTranslatef(g_vLandTranslate[0], g_vLandTranslate[1], g_vLandTranslate[2]); //translate object
@@ -329,16 +336,14 @@ void display()
         centerPoint.y = v1.y + tangent.y*10;
         centerPoint.z = v1.z + tangent.z*10;
         
-        if (counter == 0) {
+        if (counter == 0 && tVal <= 0.02) {
             set_start_vector(v1, v2, tangent, normal, binormal);
-            cout << "Test";
-            cout.flush();
         }
         else {
         //Compute new up vector (normal vector) based on previous vector
         
         //Normal Vector Computation
-        normal = vector::cross_product(tangent, binormal);
+        normal = vector::cross_product(binormal, tangent);
         normal.normalize();
         
         //Binormal Vector Computation
@@ -350,9 +355,9 @@ void display()
         cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl<<endl;
         cout.flush();
         
-//        upVector.x = normal.x;
-//        upVector.y = normal.y;
-//        upVector.z = normal.z;
+        upVector.x = normal.x;
+        upVector.y = normal.y;
+        upVector.z = normal.z;
         }
     }
 
@@ -564,14 +569,7 @@ int main (int argc, char ** argv)
         exit(1);
     }
     
-//    g_pHeightData = jpeg_read(argv[1], NULL);
-//    if (!g_pHeightData)
-//    {
-//        printf ("error reading %s.\n", argv[1]);
-//        exit(1);
-//    }
     loadSplines(argv[1]);
-   
     glutInit(&argc,argv);
     
     //Window Initialization
@@ -581,7 +579,8 @@ int main (int argc, char ** argv)
     glutCreateWindow(argv[0]);
     
     /* do initialization */
-    
+ 
+    //Texture Initialization
     glGenTextures(1, texture);
     texload(0,argv[1]);
     texload(1,argv[2]);
