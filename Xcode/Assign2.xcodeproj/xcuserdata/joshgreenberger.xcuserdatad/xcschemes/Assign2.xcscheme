@@ -67,7 +67,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/sky2.jpg"
+            argument = "/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/sky3.jpg"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

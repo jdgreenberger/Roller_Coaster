@@ -41,6 +41,13 @@ struct vector: public point{
         v3.z = v1.x*v2.y - v1.y*v2.x;
         return v3;
     }
+    
+    void normalize (){
+        double vectorLength = sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
+        this->x = this->x/vectorLength;
+        this->y = this->y/vectorLength;
+        this->z = this->z/vectorLength;
+    }
 };
 
 /* state of the world */
@@ -52,6 +59,7 @@ float heightmap [20] = {0.0, 3.0, 5.0, -4.0, 4.0, 2.0, 0.0, 3.0, 2.0, -1.0};
 struct point eyePoint;
 struct point centerPoint;
 struct point upVector;
+struct vector normal, binormal, tangent;
 
 /* spline struct which contains how many control points, and an array of control points */
 struct spline {
@@ -61,18 +69,14 @@ struct spline {
 
 struct point CatmullRoll(float t, struct point p1, struct point p2, struct point p3, struct point p4)
 {
-    
 	float t2 = t*t;
 	float t3 = t*t*t;
 	struct point v; // Interpolated point
     
 	/* Catmull Rom spline Calculation */
-    
 	v.x = ((-t3 + 2*t2-t)*(p1.x) + (3*t3-5*t2+2)*(p2.x) + (-3*t3+4*t2+t)* (p3.x) + (t3-t2)*(p4.x))/2;
 	v.y = ((-t3 + 2*t2-t)*(p1.y) + (3*t3-5*t2+2)*(p2.y) + (-3*t3+4*t2+t)* (p3.y) + (t3-t2)*(p4.y))/2;
     v.z = ((-t3 + 2*t2-t)*(p1.z) + (3*t3-5*t2+2)*(p2.z) + (-3*t3+4*t2+t)* (p3.z) + (t3-t2)*(p4.z))/2;
-//	printf("Values of v.x = %f and v.y = %f\n", v.x,v.y);
-    
 	return v;
 }
 
@@ -80,7 +84,6 @@ struct point CatmullRoll(float t, struct point p1, struct point p2, struct point
 //{
 //    
 //	float t2 = t*t;
-//	float t3 = t*t*t;
 //	struct point v; // Interpolated point
 //    
 //	/* Catmull Rom spline Calculation */
@@ -253,42 +256,19 @@ void drawScene (){
 float tVal = 0;
 int counter = 0;
 
-void set_start_vector (point v1, point v2, vector tangent, vector normal, vector binormal){
+void set_start_vector (point v1, point v2, vector tangent, vector &normal, vector &binormal){
+    
         //Starting normal vector is calculated from tangent vector and arbitrary starting Vector V
         struct vector startV;
-        float vectorLength = 0;
         startV.x = 1;  startV.y = 1;  startV.z = 1;
-        
-        //Tangent Vector Computation ... Using first two points of the spline
-        tangent.x = v2.x - v1.x;
-        tangent.y = v2.y - v1.y;
-        tangent.z = v2.z - v1.z;
-        vectorLength = sqrt(tangent.x * tangent.x + tangent.y * tangent.y + tangent.z * tangent.z);
-        tangent.x = tangent.x/vectorLength;       //normalize
-        tangent.y = tangent.y/vectorLength;       //normalize
-        tangent.z = tangent.z/vectorLength;       //normalize
-        
+    
         //Normal Vector Computation
-        normal.x = tangent.x * startV.x;
-        normal.y = tangent.y * startV.y;
-        normal.z = tangent.z * startV.z;
-        vectorLength = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-        normal.x = normal.x/vectorLength;       //normalize
-        normal.y = normal.y/vectorLength;       //normalize
-        normal.z = normal.z/vectorLength;       //normalize
-        
-        //        normal.x = 0.0;
-        //        normal.y = 1.0;
-        //        normal.z = 0.0;
-        
+        normal = vector::cross_product(tangent, startV);
+        normal.normalize();
+    
         //Binormal Vector Computation
-        binormal.x = tangent.x * normal.x;
-        binormal.y = tangent.y * normal.y;
-        binormal.z = tangent.z * normal.z;
-        vectorLength = sqrt(binormal.x * binormal.x + binormal.y * binormal.y + binormal.z * binormal.z);
-        binormal.x = binormal.x/vectorLength;       //normalize
-        binormal.y = binormal.y/vectorLength;       //normalize
-        binormal.z = binormal.z/vectorLength;       //normalize
+        binormal = vector::cross_product(tangent, normal);
+        binormal.normalize();
 }
 
 void display()
@@ -310,9 +290,7 @@ void display()
     float t;
     struct point v1, v2;	//Interpolated point
     struct point p1,p2,p3,p4;
-    struct vector normal, binormal, tangent;
-    float vectorLength;
-    
+
     drawScene();
     
     if (playCoaster){
@@ -336,8 +314,6 @@ void display()
         v1 = CatmullRoll(tVal,p1,p2,p3,p4);
         v2 = CatmullRoll(tVal + 0.02, p1, p2, p3, p4);
         
-        if (counter == 0)
-            set_start_vector(v1, v2, tangent, normal, binormal);
         
         eyePoint.x = v1.x;
         eyePoint.y = v1.y;
@@ -347,44 +323,37 @@ void display()
         tangent.x = v2.x - v1.x;
         tangent.y = v2.y - v1.y;
         tangent.z = v2.z - v1.z;
-        vectorLength = sqrt(tangent.x * tangent.x + tangent.y * tangent.y + tangent.z * tangent.z);
-        tangent.x = tangent.x/vectorLength;       //normalize
-        tangent.y = tangent.y/vectorLength;       //normalize
-        tangent.z = tangent.z/vectorLength;       //normalize
-
-        cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
-        cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
-        cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl<<endl;
-        cout.flush();
-
+        tangent.normalize();
         
         centerPoint.x = v1.x + tangent.x*10;
         centerPoint.y = v1.y + tangent.y*10;
         centerPoint.z = v1.z + tangent.z*10;
         
+        if (counter == 0) {
+            set_start_vector(v1, v2, tangent, normal, binormal);
+            cout << "Test";
+            cout.flush();
+        }
+        else {
         //Compute new up vector (normal vector) based on previous vector
         
         //Normal Vector Computation
-        normal.x = tangent.x * binormal.x;
-        normal.y = tangent.y * binormal.y;
-        normal.z = tangent.z * binormal.z;
-        vectorLength = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-        normal.x = normal.x/vectorLength;       //normalize
-        normal.y = normal.y/vectorLength;       //normalize
-        normal.z = normal.z/vectorLength;       //normalize
+        normal = vector::cross_product(tangent, binormal);
+        normal.normalize();
         
         //Binormal Vector Computation
-        binormal.x = tangent.x * normal.x;
-        binormal.y = tangent.y * normal.y;
-        binormal.z = tangent.z * normal.z;
-        vectorLength = sqrt(binormal.x * binormal.x + binormal.y * binormal.y + binormal.z * binormal.z);
-        binormal.x = binormal.x/vectorLength;       //normalize
-        binormal.y = binormal.y/vectorLength;       //normalize
-        binormal.z = binormal.z/vectorLength;       //normalize
+        binormal = vector::cross_product(tangent, normal);
+        binormal.normalize();
+            
+        cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
+        cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
+        cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl<<endl;
+        cout.flush();
         
 //        upVector.x = normal.x;
 //        upVector.y = normal.y;
 //        upVector.z = normal.z;
+        }
     }
 
     glLineWidth(5);
