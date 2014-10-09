@@ -59,11 +59,11 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/splines/*.sp"
+            argument = "/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/canyon_texture.jpg"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/canyon_texture.jpg"
+            argument = "/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/moss.jpg"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

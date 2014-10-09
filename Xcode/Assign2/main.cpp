@@ -158,75 +158,82 @@ void drawScene (){
     glBindTexture(GL_TEXTURE_2D, texture[0]);
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
     
-    for (int x = -300; x <= 280; x = x+20){
-        for (int y = -300; y <=280; y = y+20){
+    for (int x = -100; x <= 80; x = x+50){
+        for (int y = -100; y <=80; y = y+50){
             glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(x, 0.0, y+20);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x, 0.0, y+50);
             glTexCoord2f(0.0, 0.0); glVertex3f(x, 0.0, y);
-            glTexCoord2f(1.0, 0.0); glVertex3f(x+20, 0.0, y);
-            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, 0.0, y+20);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x+50, 0.0, y);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+50, 0.0, y+50);
             glEnd();
         }
     }
+//
+//    glBegin(GL_QUADS);
+//    glTexCoord2f(0.0, 1.0); glVertex3f(-100, 0.0, 100);
+//    glTexCoord2f(0.0, 0.0); glVertex3f(-100, 0.0, -100);
+//    glTexCoord2f(1.0, 0.0); glVertex3f(100, 0.0, -100);
+//    glTexCoord2f(1.0, 1.0); glVertex3f(100, 0.0, 100);
+//    glEnd();
     
     /* Draw Top Sky */
     glBindTexture(GL_TEXTURE_2D, texture[1]);
     
-    for (int x = -300; x <= 280; x = x+20){
-        for (int y = -300; y <=280; y = y+20){
+    for (int x = -100; x <= 80; x = x+50){
+        for (int y = -100; y <=80; y = y+50){
             glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(x, 100.0, y+20);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x, 100.0, y+50);
             glTexCoord2f(0.0, 0.0); glVertex3f(x, 100.0, y);
-            glTexCoord2f(1.0, 0.0); glVertex3f(x+20, 100.0, y);
-            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, 100.0, y+20);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x+50, 100.0, y);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+50, 100.0, y+50);
             glEnd();
         }
     }
     
     /* Draw Back Sky */
-    for (int x = -300; x <= 280; x = x+20){
-        for (int y = 0; y <=80; y = y+20){
+    for (int x = -100; x <= 80; x = x+50){
+        for (int y = 0; y <=80; y = y+50){
             glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(x+20, y, -300);
-            glTexCoord2f(0.0, 0.0); glVertex3f(x, y, -300);
-            glTexCoord2f(1.0, 0.0); glVertex3f(x, y+20, -300);
-            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, y+20, -300);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x+50, y, -100);
+            glTexCoord2f(0.0, 0.0); glVertex3f(x, y, -100);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x, y+50, -100);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+50, y+50, -100);
             glEnd();
         }
     }
     
     /* Draw Front Sky */
-    for (int x = -300; x <= 280; x = x+20){
-        for (int y = 0; y <=80; y = y+20){
+    for (int x = -100; x <= 80; x = x+50){
+        for (int y = 0; y <=80; y = y+50){
             glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(x+20, y, 300);
-            glTexCoord2f(0.0, 0.0); glVertex3f(x, y, 300);
-            glTexCoord2f(1.0, 0.0); glVertex3f(x, y+20, 300);
-            glTexCoord2f(1.0, 1.0); glVertex3f(x+20, y+20, 300);
+            glTexCoord2f(0.0, 1.0); glVertex3f(x+50, y, 100);
+            glTexCoord2f(0.0, 0.0); glVertex3f(x, y, 100);
+            glTexCoord2f(1.0, 0.0); glVertex3f(x, y+50, 100);
+            glTexCoord2f(1.0, 1.0); glVertex3f(x+50, y+50, 100);
             glEnd();
         }
     }
     
     /* Draw Left Sky */
-    for (int x = -300; x <= 280; x = x+20){
-        for (int y = 0; y <=80; y = y+20){
+    for (int x = -100; x <= 80; x = x+50){
+        for (int y = 0; y <=80; y = y+50){
             glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(-300, y+20, x);
-            glTexCoord2f(0.0, 0.0); glVertex3f(-300, y, x);
-            glTexCoord2f(1.0, 0.0); glVertex3f(-300, y, x+20);
-            glTexCoord2f(1.0, 1.0); glVertex3f(-300, y+20, x+20);
+            glTexCoord2f(0.0, 1.0); glVertex3f(-100, y+50, x);
+            glTexCoord2f(0.0, 0.0); glVertex3f(-100, y, x);
+            glTexCoord2f(1.0, 0.0); glVertex3f(-100, y, x+50);
+            glTexCoord2f(1.0, 1.0); glVertex3f(-100, y+50, x+50);
             glEnd();
         }
     }
     
     /* Draw Right Sky */
-    for (int x = -300; x <= 280; x = x+20){
-        for (int y = 0; y <=80; y = y+20){
+    for (int x = -100; x <= 80; x = x+50){
+        for (int y = 0; y <=80; y = y+50){
             glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(300, y+20, x);
-            glTexCoord2f(0.0, 0.0); glVertex3f(300, y, x);
-            glTexCoord2f(1.0, 0.0); glVertex3f(300, y, x+20);
-            glTexCoord2f(1.0, 1.0); glVertex3f(300, y+20, x+20);
+            glTexCoord2f(0.0, 1.0); glVertex3f(100, y+50, x);
+            glTexCoord2f(0.0, 0.0); glVertex3f(100, y, x);
+            glTexCoord2f(1.0, 0.0); glVertex3f(100, y, x+50);
+            glTexCoord2f(1.0, 1.0); glVertex3f(100, y+50, x+50);
             glEnd();
         }
     }
@@ -301,10 +308,10 @@ void display()
         if (tVal >= 0.98){
             tVal = 0;
             counter++;
-//            cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
-//            cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
-//            cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl;
-//            cout.flush();
+           // cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
+           // cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
+           // cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl;
+           // cout.flush();
         }
         else {
             tVal += 0.02;
@@ -334,8 +341,11 @@ void display()
         tangent.y = tangent.y/vectorLength;       //normalize
         tangent.z = tangent.z/vectorLength;       //normalize
 
+        cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
         cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
+        cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl<<endl;
         cout.flush();
+
         
         centerPoint.x = v1.x + tangent.x*10;
         centerPoint.y = v1.y + tangent.y*10;
