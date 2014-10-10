@@ -82,12 +82,12 @@ struct point CatmullRoll(float t, struct point p1, struct point p2, struct point
 
 //struct point CatmullRollDeriv(float t, struct point p1, struct point p2, struct point p3, struct point p4)
 //{
-//    
+//
 //	float t2 = t*t;
 //	struct point v; // Interpolated point
-//    
+//
 //	/* Catmull Rom spline Calculation */
-//    
+//
 //	v.x = ((-3*t2 + 4*t-1)*(p1.x) + (9*t2-10*t)*(p2.x) + (-9*t2+8*t+1)* (p3.x) + (3*t2-2*t)*(p4.x))/2;
 //    v.y = ((-3*t2 + 4*t-1)*(p1.y) + (9*t2-10*t)*(p2.y) + (-9*t2+8*t+1)* (p3.y) + (3*t2-2*t)*(p4.y))/2;
 //    v.z = ((-3*t2 + 4*t-1)*(p1.z) + (9*t2-10*t)*(p2.z) + (-9*t2+8*t+1)* (p3.z) + (3*t2-2*t)*(p4.z))/2;
@@ -108,7 +108,7 @@ int g_iNumOfSplines;
 void texload(int i,char *filename)
 {
     /* Texture Mapping Setup */
-
+    
     Pic* img;
     img = jpeg_read(filename, NULL);
     glBindTexture(GL_TEXTURE_2D, texture[i]);
@@ -128,11 +128,11 @@ void texload(int i,char *filename)
                  GL_RGB,
                  img->nx,
                  img->ny,
-                 0, 
-                 GL_RGB, 
-                 GL_UNSIGNED_BYTE, 
-                 &img->pix[0]); 
-    pic_free(img); 
+                 0,
+                 GL_RGB,
+                 GL_UNSIGNED_BYTE,
+                 &img->pix[0]);
+    pic_free(img);
 }
 
 void myinit()
@@ -160,7 +160,7 @@ void setImagePixel (int x, int y, float image_height, float image_width){
     //Adjusted in negative direction to center on screen
     float xImage = ((float)x - image_width/2)/image_width * 50;
     float yImage = (((float)y - image_height/2)/image_height * 50);
-  
+    
     glTexCoord2f((float) x/image_height, (float) y/image_height);
     glVertex3f(xImage, 0, yImage);
 }
@@ -249,17 +249,17 @@ int counter = 0;
 
 void set_start_vector (point v1, point v2, vector tangent, vector &normal, vector &binormal){
     
-        //Starting normal vector is calculated from tangent vector and arbitrary starting Vector V
-        struct vector startV;
-        startV.x = 1;  startV.y = 1;  startV.z = 1;
+    //Starting normal vector is calculated from tangent vector and arbitrary starting Vector V
+    struct vector startV;
+    startV.x = 1;  startV.y = 1;  startV.z = 1;
     
-        //Normal Vector Computation
-        normal = vector::cross_product(tangent, startV);
-        normal.normalize();
+    //Normal Vector Computation
+    normal = vector::cross_product(tangent, startV);
+    normal.normalize();
     
-        //Binormal Vector Computation
-        binormal = vector::cross_product(tangent, normal);
-        binormal.normalize();
+    //Binormal Vector Computation
+    binormal = vector::cross_product(tangent, normal);
+    binormal.normalize();
 }
 
 void display()
@@ -271,29 +271,29 @@ void display()
     
     //Set viewer, object, and camera perspective
     gluLookAt( eyePoint.x, eyePoint.y+3, eyePoint.z,
-               centerPoint.x, centerPoint.y, centerPoint.z,
-               upVector.x, upVector.y, upVector.z);
+              centerPoint.x, centerPoint.y, centerPoint.z,
+              upVector.x, upVector.y, upVector.z);
     
     glScalef(g_vLandScale[0], g_vLandScale[1], g_vLandScale[2]);    //scale based on x, y, z values
     glTranslatef(g_vLandTranslate[0], g_vLandTranslate[1], g_vLandTranslate[2]); //translate object
     glRotatef (g_vLandRotate[1], 0.0, 1.0, 0.0);    //rotate y dimension
     glRotatef (g_vLandRotate[0], 1.0, 0.0, 0.0);    //rotate x dimension
     glRotatef (g_vLandRotate[2], 0.0, 0.0, 1.0);    //rotate z dimension
-
+    
     float t;
     struct point v1, v2;	//Interpolated point
     struct point p1,p2,p3,p4;
-
+    
     drawScene();
     
     if (playCoaster){
         if (tVal >= 0.98){
             tVal = 0;
             counter++;
-           // cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
-           // cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
-           // cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl;
-           // cout.flush();
+            // cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
+            // cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
+            // cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl;
+            // cout.flush();
         }
         else {
             tVal += 0.02;
@@ -303,7 +303,7 @@ void display()
         p2 = g_Splines[0].points[counter+1];
         p3 = g_Splines[0].points[counter+2];
         p4 = g_Splines[0].points[counter+3];
-    
+        
         v1 = CatmullRoll(tVal,p1,p2,p3,p4);
         v2 = CatmullRoll(tVal + 0.02, p1, p2, p3, p4);
         
@@ -326,43 +326,44 @@ void display()
             set_start_vector(v1, v2, tangent, normal, binormal);
         }
         else {
-        //Compute new up vector (normal vector) based on previous vector
-        
-        //Normal Vector Computation
-        normal = vector::cross_product(binormal, tangent);
-        normal.normalize();
+            //Compute new up vector (normal vector) based on previous vector
             
-        //Binormal Vector Computation
-        binormal = vector::cross_product(tangent, normal);
-        binormal.normalize();
+            //Normal Vector Computation
+            normal = vector::cross_product(binormal, tangent);
+            normal.normalize();
             
-        cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
-        cout.flush();
-        
-        upVector.x = normal.x;
-        upVector.y = normal.y;
-        upVector.z = normal.z;
+            //Binormal Vector Computation
+            binormal = vector::cross_product(tangent, normal);
+            binormal.normalize();
+            
+            cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
+            cout.flush();
+            
+//            upVector.x = normal.x;
+//            upVector.y = normal.y;
+//            upVector.z = normal.z;
         }
     }
     
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture[2]);
-    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
-
-//    glLineWidth(5);
-//    glPointSize(5);
-//    glBegin(GL_LINE_STRIP);
+    //DRAW TRACK
+    
+    //LEFT RAIL
     for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, texture[2]);
+        glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
+
         glColor3d(0.4, 0.0, 0.0);
         p1 = g_Splines[0].points[i];
         p2 = g_Splines[0].points[i+1];
         p3 = g_Splines[0].points[i+2];
         p4 = g_Splines[0].points[i+3];
+        int draw_cross = 0, draw_supports = 0;
         for(t=0;t<1;t+=0.02)
         {
             v1 = CatmullRoll(t,p1,p2,p3,p4);
             v2 = CatmullRoll(t + 0.02, p1, p2, p3, p4);
-
+            
             //Tangent Vector Computation ... Using first two points of the spline
             tangent2.x = v2.x - v1.x;
             tangent2.y = v2.y - v1.y;
@@ -373,15 +374,16 @@ void display()
             }
             
             //Compute new up vector (normal vector) based on previous vector
-                
+            
             //Normal Vector Computation
             normal2 = vector::cross_product(binormal2, tangent2);
             normal2.normalize();
-                
+            
             //Binormal Vector Computation
             binormal2 = vector::cross_product(tangent2, normal2);
             binormal2.normalize();
-   
+            
+            //LEFT RAIL
             glBegin(GL_QUADS);
             glTexCoord2f(0.0, 0.0);
             glVertex3f(v1.x - binormal2.x, v1.y+1 - binormal2.y, v1.z - binormal2.z);
@@ -392,39 +394,8 @@ void display()
             glTexCoord2f(1.0, 0.0);
             glVertex3f(v1.x - binormal2.x + 0.1, v1.y+1 - binormal2.y + 0.1, v1.z - binormal2.z + 0.1);
             glEnd();
-            }
-    }
-  
-    for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
-        glColor3d(0.4, 0.0, 0.0);
-        p1 = g_Splines[0].points[i];
-        p2 = g_Splines[0].points[i+1];
-        p3 = g_Splines[0].points[i+2];
-        p4 = g_Splines[0].points[i+3];
-        for(t=0;t<1;t+=0.02)
-        {
-            v1 = CatmullRoll(t,p1,p2,p3,p4);
-            v2 = CatmullRoll(t + 0.02, p1, p2, p3, p4);
             
-            //Tangent Vector Computation ... Using first two points of the spline
-            tangent2.x = v2.x - v1.x;
-            tangent2.y = v2.y - v1.y;
-            tangent2.z = v2.z - v1.z;
-            tangent2.normalize();
-            if (i == 0 &&  t == 0) {
-                set_start_vector(v1, v2, tangent2, normal2, binormal2);
-            }
-            
-            //Compute new up vector (normal vector) based on previous vector
-            
-            //Normal Vector Computation
-            normal2 = vector::cross_product(binormal2, tangent2);
-            normal2.normalize();
-            
-            //Binormal Vector Computation
-            binormal2 = vector::cross_product(tangent2, normal2);
-            binormal2.normalize();
-            
+            //RIGHT RAIL
             glBegin(GL_QUADS);
             glTexCoord2f(0.0, 0.0);
             glVertex3f(v1.x + binormal2.x, v1.y+1 + binormal2.y, v1.z + binormal2.z);
@@ -435,49 +406,44 @@ void display()
             glTexCoord2f(1.0, 0.0);
             glVertex3f(v1.x + binormal2.x + 0.1, v1.y+1 + binormal2.y + 0.1, v1.z + binormal2.z + 0.1);
             glEnd();
-        }
-    }
-    
-    for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
-        glColor3d(0.4, 0.0, 0.0);
-        p1 = g_Splines[0].points[i];
-        p2 = g_Splines[0].points[i+1];
-        p3 = g_Splines[0].points[i+2];
-        p4 = g_Splines[0].points[i+3];
-        for(t=0;t<1;t+=0.02)
-        {
-            v1 = CatmullRoll(t,p1,p2,p3,p4);
-            v2 = CatmullRoll(t + 0.01, p1, p2, p3, p4);
             
-            //Tangent Vector Computation ... Using first two points of the spline
-            tangent2.x = v2.x - v1.x;
-            tangent2.y = v2.y - v1.y;
-            tangent2.z = v2.z - v1.z;
-            tangent2.normalize();
-            if (i == 0 &&  t == 0) {
-                set_start_vector(v1, v2, tangent2, normal2, binormal2);
+            //CROSS BAR
+            if (draw_cross < 1){
+                draw_cross++;
+            }
+            else {
+                glBegin(GL_QUADS);
+                glTexCoord2f(0.0, 0.0);
+                glVertex3f(v1.x - binormal2.x, v1.y+1 - binormal2.y, v1.z - binormal2.z);
+                glTexCoord2f(1.0, 0.0);
+                glVertex3f(v1.x + binormal2.x, v1.y+1 + binormal2.y, v1.z + binormal2.z);
+                glTexCoord2f(1.0, 1.0);
+                glVertex3f(v2.x + binormal2.x, v2.y+1 + binormal2.y, v2.z + binormal2.z);
+                glTexCoord2f(0.0, 1.0);
+                glVertex3f(v2.x - binormal2.x, v2.y+1 - binormal2.y, v2.z - binormal2.z);
+                glEnd();
+                draw_cross = 0;
             }
             
-            //Compute new up vector (normal vector) based on previous vector
-            
-            //Normal Vector Computation
-            normal2 = vector::cross_product(binormal2, tangent2);
-            normal2.normalize();
-            
-            //Binormal Vector Computation
-            binormal2 = vector::cross_product(tangent2, normal2);
-            binormal2.normalize();
-            
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 0.0);
-            glVertex3f(v1.x - binormal2.x, v1.y+1 - binormal2.y, v1.z - binormal2.z);
-            glTexCoord2f(1.0, 0.0);
-            glVertex3f(v1.x + binormal2.x, v1.y+1 + binormal2.y, v1.z + binormal2.z);
-            glTexCoord2f(1.0, 1.0);
-            glVertex3f(v2.x + binormal2.x, v2.y+1 + binormal2.y, v2.z + binormal2.z);
-            glTexCoord2f(0.0, 1.0);
-            glVertex3f(v2.x - binormal2.x, v2.y+1 - binormal2.y, v2.z - binormal2.z);
-            glEnd();
+            //SUPPORTS
+            if (draw_supports < 20)
+                draw_supports++;
+            else {
+                //LEFT SUPPORT
+                glLineWidth(5);
+                glBegin(GL_LINE_STRIP);
+                glVertex3f(v1.x - binormal2.x, v1.y+1 - binormal2.y, v1.z - binormal2.z);
+                glVertex3f(v1.x - binormal2.x, 0, v1.z - binormal2.z);
+                glEnd();
+                
+                //RIGHT SUPPORT
+                glBegin(GL_LINE_STRIP);
+                glVertex3f(v2.x + binormal2.x, v2.y+1 + binormal2.y, v2.z + binormal2.z);
+                glVertex3f(v2.x + binormal2.x, 0, v2.z + binormal2.z);
+                glEnd();
+               
+                draw_supports = 0;
+            }
         }
     }
     glDisable(GL_TEXTURE_2D);
@@ -681,14 +647,14 @@ int main (int argc, char ** argv)
     glutCreateWindow(argv[0]);
     
     /* do initialization */
- 
+    
     //Texture Initialization
-    glGenTextures(3, texture);
+    glGenTextures(5, texture);
     texload(0,argv[1]);
     texload(1,argv[2]);
     texload(2,argv[3]);
     
-        myinit();
+    myinit();
     
     // GLUT callbacks
     
@@ -698,9 +664,9 @@ int main (int argc, char ** argv)
     
     
     /* allow the user to quit using the right mouse button menu */
-  //  glutSetMenu(g_iMenuId);
-  //  glutAddMenuEntry("Quit",0);
-  //  glutAttachMenu(GLUT_RIGHT_BUTTON);
+    //  glutSetMenu(g_iMenuId);
+    //  glutAddMenuEntry("Quit",0);
+    //  glutAttachMenu(GLUT_RIGHT_BUTTON);
     
     /* replace with any animate code */
     glutIdleFunc(doIdle);
@@ -714,7 +680,7 @@ int main (int argc, char ** argv)
     
     //Callback for keyboard input
     glutKeyboardFunc(keyboard);
-  
-  glutMainLoop();
+    
+    glutMainLoop();
     return(0);
 }
