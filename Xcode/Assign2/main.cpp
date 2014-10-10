@@ -13,19 +13,6 @@
 #include <iostream>
 using namespace std;
 
-int g_iMenuId;
-int g_vMousePos[2] = {0, 0};
-int g_iLeftMouseButton = 0;    /* 1 if pressed, 0 if not */
-int g_iMiddleMouseButton = 0;
-int g_iRightMouseButton = 0;
-Pic * g_pHeightData;
-static GLuint texName;
-GLuint texture[5];
-string fileName;
-
-typedef enum { ROTATE, TRANSLATE, SCALE} CONTROLSTATE;
-CONTROLSTATE g_ControlState = ROTATE;
-
 /* represents one control point along the spline */
 struct point {
     double x;
@@ -50,6 +37,18 @@ struct vector: public point{
     }
 };
 
+int g_iMenuId;
+int g_vMousePos[2] = {0, 0};
+int g_iLeftMouseButton = 0;    /* 1 if pressed, 0 if not */
+int g_iMiddleMouseButton = 0;
+int g_iRightMouseButton = 0;
+GLuint texture[5];
+string fileName;
+
+typedef enum { ROTATE, TRANSLATE, SCALE} CONTROLSTATE;
+CONTROLSTATE g_ControlState = ROTATE;
+
+
 /* state of the world */
 float g_vLandRotate[3] = {0.0, 0.0, 0.0};
 float g_vLandTranslate[3] = {0.0, 0.0, 0.0};
@@ -60,6 +59,7 @@ struct point eyePoint;
 struct point centerPoint;
 struct point upVector;
 struct vector normal, binormal, tangent;
+struct vector normal2, binormal2, tangent2;
 
 /* spline struct which contains how many control points, and an array of control points */
 struct spline {
@@ -269,11 +269,6 @@ void set_start_vector (point v1, point v2, vector tangent, vector &normal, vecto
         //Binormal Vector Computation
         binormal = vector::cross_product(tangent, normal);
         binormal.normalize();
-    
-    cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
-    cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
-    cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl<<endl;
-    cout.flush();
 }
 
 void display()
@@ -345,7 +340,7 @@ void display()
         //Normal Vector Computation
         normal = vector::cross_product(binormal, tangent);
         normal.normalize();
-        
+            
         //Binormal Vector Computation
         binormal = vector::cross_product(tangent, normal);
         binormal.normalize();
@@ -355,30 +350,125 @@ void display()
         cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl<<endl;
         cout.flush();
         
-        upVector.x = normal.x;
-        upVector.y = normal.y;
-        upVector.z = normal.z;
+//        upVector.x = normal.x;
+//        upVector.y = normal.y;
+//        upVector.z = normal.z;
         }
     }
 
     glLineWidth(5);
+    glPointSize(5);
     glBegin(GL_LINE_STRIP);
-        for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
+    for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
         glColor3d(0.4, 0.0, 0.0);
         p1 = g_Splines[0].points[i];
         p2 = g_Splines[0].points[i+1];
         p3 = g_Splines[0].points[i+2];
         p4 = g_Splines[0].points[i+3];
-        
         for(t=0;t<1;t+=0.02)
         {
             v1 = CatmullRoll(t,p1,p2,p3,p4);
-            glVertex3f(v1.x, v1.y+1, v1.z);
+            v2 = CatmullRoll(t + 0.02, p1, p2, p3, p4);
+
+            //Tangent Vector Computation ... Using first two points of the spline
+            tangent2.x = v2.x - v1.x;
+            tangent2.y = v2.y - v1.y;
+            tangent2.z = v2.z - v1.z;
+            tangent2.normalize();
+            if (i == 0 &&  t == 0) {
+                set_start_vector(v1, v2, tangent2, normal2, binormal2);
+            }
             
+            //Compute new up vector (normal vector) based on previous vector
+                
+            //Normal Vector Computation
+            normal2 = vector::cross_product(binormal2, tangent2);
+            normal2.normalize();
+                
+            //Binormal Vector Computation
+            binormal2 = vector::cross_product(tangent2, normal2);
+            binormal2.normalize();
+   
+            glVertex3f(v1.x - binormal2.x, v1.y+1 - binormal2.y, v1.z - binormal2.z);
+            }
+    }
+    glEnd();
+    
+    glBegin(GL_LINE_STRIP);
+    for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
+        glColor3d(0.4, 0.0, 0.0);
+        p1 = g_Splines[0].points[i];
+        p2 = g_Splines[0].points[i+1];
+        p3 = g_Splines[0].points[i+2];
+        p4 = g_Splines[0].points[i+3];
+        for(t=0;t<1;t+=0.02)
+        {
+            v1 = CatmullRoll(t,p1,p2,p3,p4);
+            v2 = CatmullRoll(t + 0.02, p1, p2, p3, p4);
+            
+            //Tangent Vector Computation ... Using first two points of the spline
+            tangent2.x = v2.x - v1.x;
+            tangent2.y = v2.y - v1.y;
+            tangent2.z = v2.z - v1.z;
+            tangent2.normalize();
+            if (i == 0 &&  t == 0) {
+                set_start_vector(v1, v2, tangent2, normal2, binormal2);
+            }
+            
+            //Compute new up vector (normal vector) based on previous vector
+            
+            //Normal Vector Computation
+            normal2 = vector::cross_product(binormal2, tangent2);
+            normal2.normalize();
+            
+            //Binormal Vector Computation
+            binormal2 = vector::cross_product(tangent2, normal2);
+            binormal2.normalize();
+            
+            glVertex3f(v1.x + binormal2.x, v1.y+1 + binormal2.y, v1.z + binormal2.z);
         }
     }
-    glColor3d(1.0, 1.0, 1.0);
     glEnd();
+    
+    for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
+        glColor3d(0.4, 0.0, 0.0);
+        p1 = g_Splines[0].points[i];
+        p2 = g_Splines[0].points[i+1];
+        p3 = g_Splines[0].points[i+2];
+        p4 = g_Splines[0].points[i+3];
+        for(t=0;t<1;t+=0.02)
+        {
+            v1 = CatmullRoll(t,p1,p2,p3,p4);
+            v2 = CatmullRoll(t + 0.02, p1, p2, p3, p4);
+            
+            //Tangent Vector Computation ... Using first two points of the spline
+            tangent2.x = v2.x - v1.x;
+            tangent2.y = v2.y - v1.y;
+            tangent2.z = v2.z - v1.z;
+            tangent2.normalize();
+            if (i == 0 &&  t == 0) {
+                set_start_vector(v1, v2, tangent2, normal2, binormal2);
+            }
+            
+            //Compute new up vector (normal vector) based on previous vector
+            
+            //Normal Vector Computation
+            normal2 = vector::cross_product(binormal2, tangent2);
+            normal2.normalize();
+            
+            //Binormal Vector Computation
+            binormal2 = vector::cross_product(tangent2, normal2);
+            binormal2.normalize();
+            
+            glBegin(GL_LINE_STRIP);
+            glVertex3f(v1.x - binormal2.x, v1.y+1 - binormal2.y, v1.z - binormal2.z);
+            glVertex3f(v1.x + binormal2.x, v1.y+1 + binormal2.y, v1.z + binormal2.z);
+            glEnd();
+        }
+    }
+    
+    glColor3d(1.0, 1.0, 1.0);
+   // glEnd();
     
     glutSwapBuffers(); // double buffer flush
 }
