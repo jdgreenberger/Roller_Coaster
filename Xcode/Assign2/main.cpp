@@ -345,9 +345,13 @@ void display()
         }
     }
     
-    glLineWidth(5);
-    glPointSize(5);
-    glBegin(GL_LINE_STRIP);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture[2]);
+    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
+
+//    glLineWidth(5);
+//    glPointSize(5);
+//    glBegin(GL_LINE_STRIP);
     for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
         glColor3d(0.4, 0.0, 0.0);
         p1 = g_Splines[0].points[i];
@@ -378,12 +382,19 @@ void display()
             binormal2 = vector::cross_product(tangent2, normal2);
             binormal2.normalize();
    
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 0.0);
             glVertex3f(v1.x - binormal2.x, v1.y+1 - binormal2.y, v1.z - binormal2.z);
+            glTexCoord2f(0.0, 1.0);
+            glVertex3f(v2.x - binormal2.x, v2.y+1 - binormal2.y, v2.z - binormal2.z);
+            glTexCoord2f(1.0, 1.0);
+            glVertex3f(v2.x - binormal2.x + 0.1, v2.y+1 - binormal2.y + 0.1, v2.z - binormal2.z + 0.1);
+            glTexCoord2f(1.0, 0.0);
+            glVertex3f(v1.x - binormal2.x + 0.1, v1.y+1 - binormal2.y + 0.1, v1.z - binormal2.z + 0.1);
+            glEnd();
             }
     }
-    glEnd();
-    
-    glBegin(GL_LINE_STRIP);
+  
     for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
         glColor3d(0.4, 0.0, 0.0);
         p1 = g_Splines[0].points[i];
@@ -414,15 +425,19 @@ void display()
             binormal2 = vector::cross_product(tangent2, normal2);
             binormal2.normalize();
             
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 0.0);
             glVertex3f(v1.x + binormal2.x, v1.y+1 + binormal2.y, v1.z + binormal2.z);
+            glTexCoord2f(0.0, 1.0);
+            glVertex3f(v2.x + binormal2.x, v2.y+1 + binormal2.y, v2.z + binormal2.z);
+            glTexCoord2f(1.0, 1.0);
+            glVertex3f(v2.x + binormal2.x + 0.1, v2.y+1 + binormal2.y + 0.1, v2.z + binormal2.z + 0.1);
+            glTexCoord2f(1.0, 0.0);
+            glVertex3f(v1.x + binormal2.x + 0.1, v1.y+1 + binormal2.y + 0.1, v1.z + binormal2.z + 0.1);
+            glEnd();
         }
     }
-   // glColor3d(1.0, 1.0, 1.0);
-    glEnd();
     
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture[2]);
-    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
     for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
         glColor3d(0.4, 0.0, 0.0);
         p1 = g_Splines[0].points[i];
