@@ -42,7 +42,7 @@ int g_vMousePos[2] = {0, 0};
 int g_iLeftMouseButton = 0;    /* 1 if pressed, 0 if not */
 int g_iMiddleMouseButton = 0;
 int g_iRightMouseButton = 0;
-GLuint texture[5];
+GLuint texture[3];
 string fileName;
 
 typedef enum { ROTATE, TRANSLATE, SCALE} CONTROLSTATE;
@@ -168,8 +168,8 @@ void setImagePixel (int x, int y, float image_height, float image_width){
 void drawScene (){
     /* Draw Ground */
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture[0]);
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
+    glBindTexture(GL_TEXTURE_2D, texture[0]);
     
     for (int x = -100; x <= 80; x = x+50){
         for (int y = -100; y <=80; y = y+50){
@@ -181,17 +181,9 @@ void drawScene (){
             glEnd();
         }
     }
-//
-//    glBegin(GL_QUADS);
-//    glTexCoord2f(0.0, 1.0); glVertex3f(-100, 0.0, 100);
-//    glTexCoord2f(0.0, 0.0); glVertex3f(-100, 0.0, -100);
-//    glTexCoord2f(1.0, 0.0); glVertex3f(100, 0.0, -100);
-//    glTexCoord2f(1.0, 1.0); glVertex3f(100, 0.0, 100);
-//    glEnd();
     
     /* Draw Top Sky */
     glBindTexture(GL_TEXTURE_2D, texture[1]);
-    
     for (int x = -100; x <= 80; x = x+50){
         for (int y = -100; y <=80; y = y+50){
             glBegin(GL_QUADS);
@@ -250,7 +242,6 @@ void drawScene (){
             glEnd();
         }
     }
-    
     glDisable(GL_TEXTURE_2D);
 }
 float tVal = 0;
@@ -346,16 +337,14 @@ void display()
         binormal.normalize();
             
         cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
-        cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
-        cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl<<endl;
         cout.flush();
         
-//        upVector.x = normal.x;
-//        upVector.y = normal.y;
-//        upVector.z = normal.z;
+        upVector.x = normal.x;
+        upVector.y = normal.y;
+        upVector.z = normal.z;
         }
     }
-
+    
     glLineWidth(5);
     glPointSize(5);
     glBegin(GL_LINE_STRIP);
@@ -428,8 +417,12 @@ void display()
             glVertex3f(v1.x + binormal2.x, v1.y+1 + binormal2.y, v1.z + binormal2.z);
         }
     }
+   // glColor3d(1.0, 1.0, 1.0);
     glEnd();
     
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture[2]);
+    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
     for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
         glColor3d(0.4, 0.0, 0.0);
         p1 = g_Splines[0].points[i];
@@ -439,7 +432,7 @@ void display()
         for(t=0;t<1;t+=0.02)
         {
             v1 = CatmullRoll(t,p1,p2,p3,p4);
-            v2 = CatmullRoll(t + 0.02, p1, p2, p3, p4);
+            v2 = CatmullRoll(t + 0.01, p1, p2, p3, p4);
             
             //Tangent Vector Computation ... Using first two points of the spline
             tangent2.x = v2.x - v1.x;
@@ -460,15 +453,19 @@ void display()
             binormal2 = vector::cross_product(tangent2, normal2);
             binormal2.normalize();
             
-            glBegin(GL_LINE_STRIP);
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 0.0);
             glVertex3f(v1.x - binormal2.x, v1.y+1 - binormal2.y, v1.z - binormal2.z);
+            glTexCoord2f(1.0, 0.0);
             glVertex3f(v1.x + binormal2.x, v1.y+1 + binormal2.y, v1.z + binormal2.z);
+            glTexCoord2f(1.0, 1.0);
+            glVertex3f(v2.x + binormal2.x, v2.y+1 + binormal2.y, v2.z + binormal2.z);
+            glTexCoord2f(0.0, 1.0);
+            glVertex3f(v2.x - binormal2.x, v2.y+1 - binormal2.y, v2.z - binormal2.z);
             glEnd();
         }
     }
-    
-    glColor3d(1.0, 1.0, 1.0);
-   // glEnd();
+    glDisable(GL_TEXTURE_2D);
     
     glutSwapBuffers(); // double buffer flush
 }
@@ -671,9 +668,10 @@ int main (int argc, char ** argv)
     /* do initialization */
  
     //Texture Initialization
-    glGenTextures(1, texture);
+    glGenTextures(3, texture);
     texload(0,argv[1]);
     texload(1,argv[2]);
+    texload(2,argv[3]);
     
         myinit();
     
