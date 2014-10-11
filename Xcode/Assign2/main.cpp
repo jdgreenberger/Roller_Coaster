@@ -43,6 +43,7 @@ int g_iLeftMouseButton = 0;    /* 1 if pressed, 0 if not */
 int g_iMiddleMouseButton = 0;
 int g_iRightMouseButton = 0;
 GLuint texture[3];
+GLUquadricObj *sphere = NULL;
 string fileName;
 
 typedef enum { ROTATE, TRANSLATE, SCALE} CONTROLSTATE;
@@ -53,6 +54,7 @@ CONTROLSTATE g_ControlState = ROTATE;
 float g_vLandRotate[3] = {0.0, 0.0, 0.0};
 float g_vLandTranslate[3] = {0.0, 0.0, 0.0};
 float g_vLandScale[3] = {1.0, 1.0, 1.0};
+
 bool playCoaster = false;
 float heightmap [20] = {0.0, 3.0, 5.0, -4.0, 4.0, 2.0, 0.0, 3.0, 2.0, -1.0};
 struct point eyePoint;
@@ -80,24 +82,24 @@ struct point CatmullRoll(float t, struct point p1, struct point p2, struct point
 	return v;
 }
 
-//struct point CatmullRollDeriv(float t, struct point p1, struct point p2, struct point p3, struct point p4)
-//{
-//
-//	float t2 = t*t;
-//	struct point v; // Interpolated point
-//
-//	/* Catmull Rom spline Calculation */
-//
-//	v.x = ((-3*t2 + 4*t-1)*(p1.x) + (9*t2-10*t)*(p2.x) + (-9*t2+8*t+1)* (p3.x) + (3*t2-2*t)*(p4.x))/2;
-//    v.y = ((-3*t2 + 4*t-1)*(p1.y) + (9*t2-10*t)*(p2.y) + (-9*t2+8*t+1)* (p3.y) + (3*t2-2*t)*(p4.y))/2;
-//    v.z = ((-3*t2 + 4*t-1)*(p1.z) + (9*t2-10*t)*(p2.z) + (-9*t2+8*t+1)* (p3.z) + (3*t2-2*t)*(p4.z))/2;
-//
-//    //Tangent normal computed by diving by length
-//    v.x /= p3.x-p2.x;
-//    v.y /= p3.y-p2.y;
-//    v.z /= p3.z-p2.z;
-//	return v;
-//}
+struct vector CatmullRollDeriv(float t, struct point p1, struct point p2, struct point p3, struct point p4)
+{
+
+	float t2 = t*t;
+	struct vector v; // Interpolated point
+
+	/* Catmull Rom spline Calculation */
+
+	v.x = ((-3*t2 + 4*t-1)*(p1.x) + (9*t2-10*t)*(p2.x) + (-9*t2+8*t+1)* (p3.x) + (3*t2-2*t)*(p4.x))/2;
+    v.y = ((-3*t2 + 4*t-1)*(p1.y) + (9*t2-10*t)*(p2.y) + (-9*t2+8*t+1)* (p3.y) + (3*t2-2*t)*(p4.y))/2;
+    v.z = ((-3*t2 + 4*t-1)*(p1.z) + (9*t2-10*t)*(p2.z) + (-9*t2+8*t+1)* (p3.z) + (3*t2-2*t)*(p4.z))/2;
+
+    //Tangent normal computed by diving by length
+    v.x /= p3.x-p2.x;
+    v.y /= p3.y-p2.y;
+    v.z /= p3.z-p2.z;
+	return v;
+}
 
 /* the spline array */
 struct spline *g_Splines;
@@ -153,6 +155,12 @@ void myinit()
     
     //Center Point
     centerPoint.x = 0.0; centerPoint.y = 0.0; centerPoint.z = 20.0;
+    
+    //Sphere
+    sphere = gluNewQuadric();
+    gluQuadricDrawStyle(sphere, GLU_FILL);
+    gluQuadricTexture(sphere, GL_TRUE);
+    gluQuadricNormals(sphere, GLU_SMOOTH);
 }
 
 void setImagePixel (int x, int y, float image_height, float image_width){
@@ -182,67 +190,10 @@ void drawScene (){
         }
     }
     
-    /* Draw Top Sky */
+    //SPHERE
     glBindTexture(GL_TEXTURE_2D, texture[1]);
-    for (int x = -100; x <= 80; x = x+50){
-        for (int y = -100; y <=80; y = y+50){
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(x, 100.0, y+50);
-            glTexCoord2f(0.0, 0.0); glVertex3f(x, 100.0, y);
-            glTexCoord2f(1.0, 0.0); glVertex3f(x+50, 100.0, y);
-            glTexCoord2f(1.0, 1.0); glVertex3f(x+50, 100.0, y+50);
-            glEnd();
-        }
-    }
-    
-    /* Draw Back Sky */
-    for (int x = -100; x <= 80; x = x+50){
-        for (int y = 0; y <=80; y = y+50){
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(x+50, y, -100);
-            glTexCoord2f(0.0, 0.0); glVertex3f(x, y, -100);
-            glTexCoord2f(1.0, 0.0); glVertex3f(x, y+50, -100);
-            glTexCoord2f(1.0, 1.0); glVertex3f(x+50, y+50, -100);
-            glEnd();
-        }
-    }
-    
-    /* Draw Front Sky */
-    for (int x = -100; x <= 80; x = x+50){
-        for (int y = 0; y <=80; y = y+50){
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(x+50, y, 100);
-            glTexCoord2f(0.0, 0.0); glVertex3f(x, y, 100);
-            glTexCoord2f(1.0, 0.0); glVertex3f(x, y+50, 100);
-            glTexCoord2f(1.0, 1.0); glVertex3f(x+50, y+50, 100);
-            glEnd();
-        }
-    }
-    
-    /* Draw Left Sky */
-    for (int x = -100; x <= 80; x = x+50){
-        for (int y = 0; y <=80; y = y+50){
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(-100, y+50, x);
-            glTexCoord2f(0.0, 0.0); glVertex3f(-100, y, x);
-            glTexCoord2f(1.0, 0.0); glVertex3f(-100, y, x+50);
-            glTexCoord2f(1.0, 1.0); glVertex3f(-100, y+50, x+50);
-            glEnd();
-        }
-    }
-    
-    /* Draw Right Sky */
-    for (int x = -100; x <= 80; x = x+50){
-        for (int y = 0; y <=80; y = y+50){
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0, 1.0); glVertex3f(100, y+50, x);
-            glTexCoord2f(0.0, 0.0); glVertex3f(100, y, x);
-            glTexCoord2f(1.0, 0.0); glVertex3f(100, y, x+50);
-            glTexCoord2f(1.0, 1.0); glVertex3f(100, y+50, x+50);
-            glEnd();
-        }
-    }
-    glDisable(GL_TEXTURE_2D);
+    gluSphere(sphere, 200.0, 50, 50);
+        glDisable(GL_TEXTURE_2D);
 }
 float tVal = 0;
 int counter = 0;
@@ -336,12 +287,9 @@ void display()
             binormal = vector::cross_product(tangent, normal);
             binormal.normalize();
             
-            cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
-            cout.flush();
-            
-//            upVector.x = normal.x;
-//            upVector.y = normal.y;
-//            upVector.z = normal.z;
+            upVector.x = normal.x/30;
+            upVector.y = normal.y;
+            upVector.z = normal.z/10;
         }
     }
     
@@ -408,7 +356,7 @@ void display()
             glEnd();
             
             //CROSS BAR
-            if (draw_cross < 1){
+            if (draw_cross < 3){
                 draw_cross++;
             }
             else {
