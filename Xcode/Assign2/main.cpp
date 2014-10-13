@@ -71,14 +71,20 @@ struct spline {
 
 struct point CatmullRoll(float t, struct point p1, struct point p2, struct point p3, struct point p4)
 {
+    
 	float t2 = t*t;
 	float t3 = t*t*t;
 	struct point v; // Interpolated point
     
-	/* Catmull Rom spline Calculation */
-	v.x = ((-t3 + 2*t2-t)*(p1.x) + (3*t3-5*t2+2)*(p2.x) + (-3*t3+4*t2+t)* (p3.x) + (t3-t2)*(p4.x))/2;
-	v.y = ((-t3 + 2*t2-t)*(p1.y) + (3*t3-5*t2+2)*(p2.y) + (-3*t3+4*t2+t)* (p3.y) + (t3-t2)*(p4.y))/2;
-    v.z = ((-t3 + 2*t2-t)*(p1.z) + (3*t3-5*t2+2)*(p2.z) + (-3*t3+4*t2+t)* (p3.z) + (t3-t2)*(p4.z))/2;
+//	v.x = ((-t3 + 2*t2-t)*(p1.x) + (3*t3-5*t2+2)*(p2.x) + (-3*t3+4*t2+t)* (p3.x) + (t3-t2)*(p4.x))/2;
+//	v.y = ((-t3 + 2*t2-t)*(p1.y) + (3*t3-5*t2+2)*(p2.y) + (-3*t3+4*t2+t)* (p3.y) + (t3-t2)*(p4.y))/2;
+//  v.z = ((-t3 + 2*t2-t)*(p1.z) + (3*t3-5*t2+2)*(p2.z) + (-3*t3+4*t2+t)* (p3.z) + (t3-t2)*(p4.z))/2;
+    
+    /* Catmull Rom spline Calculation */
+    v.x = 0.5 * ((2*p2.x) + (-p1.x+p3.x) * t + (2*p1.x - 5*p2.x + 4*p3.x - p4.x) * t2 + (-p1.x+3*p2.x-3*p3.x + p4.x) * t3);
+    v.y = 0.5 * ((2*p2.y) + (-p1.y+p3.y) * t + (2*p1.y - 5*p2.y + 4*p3.y - p4.y) * t2 + (-p1.y+3*p2.y-3*p3.y + p4.y) * t3);
+    v.z = 0.5 * ((2*p2.z) + (-p1.z+p3.z) * t + (2*p1.z - 5*p2.z + 4*p3.z - p4.z) * t2 + (-p1.z+3*p2.z-3*p3.z + p4.z) * t3);
+                 
 	return v;
 }
 
@@ -93,12 +99,7 @@ struct vector CatmullRollDeriv(float t, struct point p1, struct point p2, struct
 	v.x = ((-3*t2 + 4*t-1)*(p1.x) + (9*t2-10*t)*(p2.x) + (-9*t2+8*t+1)* (p3.x) + (3*t2-2*t)*(p4.x))/2;
     v.y = ((-3*t2 + 4*t-1)*(p1.y) + (9*t2-10*t)*(p2.y) + (-9*t2+8*t+1)* (p3.y) + (3*t2-2*t)*(p4.y))/2;
     v.z = ((-3*t2 + 4*t-1)*(p1.z) + (9*t2-10*t)*(p2.z) + (-9*t2+8*t+1)* (p3.z) + (3*t2-2*t)*(p4.z))/2;
-
-    //Tangent normal computed by diving by length
-    v.x /= p3.x-p2.x;
-    v.y /= p3.y-p2.y;
-    v.z /= p3.z-p2.z;
-	return v;
+    return v;
 }
 
 /* the spline array */
@@ -202,7 +203,7 @@ void set_start_vector (point v1, point v2, vector tangent, vector &normal, vecto
     
     //Starting normal vector is calculated from tangent vector and arbitrary starting Vector V
     struct vector startV;
-    startV.x = 1;  startV.y = 1;  startV.z = 1;
+    startV.x = 0;  startV.y = 1;  startV.z = 1;
     
     //Normal Vector Computation
     normal = vector::cross_product(tangent, startV);
@@ -241,10 +242,6 @@ void display()
         if (tVal >= 0.98){
             tVal = 0;
             counter++;
-            // cout << "Normal vals = " << normal.x << " " << normal.y << " " << normal.z << endl;
-            // cout << "Tangent vals = " << tangent.x << " " << tangent.y << " " << tangent.z << endl;
-            // cout << "BiNormal vals = " << binormal.x << " " << binormal.y << " " << binormal.z << endl;
-            // cout.flush();
         }
         else {
             tVal += 0.02;
@@ -263,10 +260,8 @@ void display()
         eyePoint.y = v1.y;
         eyePoint.z = v1.z;
         
-        //Tangent Vector Computation ... Using first two points of the spline
-        tangent.x = v2.x - v1.x;
-        tangent.y = v2.y - v1.y;
-        tangent.z = v2.z - v1.z;
+        //Tangent Vector Computation
+        tangent = CatmullRollDeriv(tVal, p1, p2, p3, p4);
         tangent.normalize();
         
         centerPoint.x = v1.x + tangent.x*10;
@@ -313,13 +308,12 @@ void display()
             v2 = CatmullRoll(t + 0.02, p1, p2, p3, p4);
             
             //Tangent Vector Computation ... Using first two points of the spline
-            tangent2.x = v2.x - v1.x;
-            tangent2.y = v2.y - v1.y;
-            tangent2.z = v2.z - v1.z;
+            tangent2 = CatmullRollDeriv(t, p1, p2, p3, p4);
             tangent2.normalize();
             if (i == 0 &&  t == 0) {
                 set_start_vector(v1, v2, tangent2, normal2, binormal2);
             }
+            else {
             
             //Compute new up vector (normal vector) based on previous vector
             
@@ -330,6 +324,7 @@ void display()
             //Binormal Vector Computation
             binormal2 = vector::cross_product(tangent2, normal2);
             binormal2.normalize();
+            }
             
             //LEFT RAIL
             glBegin(GL_QUADS);
