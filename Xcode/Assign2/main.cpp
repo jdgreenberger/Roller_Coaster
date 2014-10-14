@@ -76,10 +76,6 @@ struct point CatmullRoll(float t, struct point p1, struct point p2, struct point
 	float t3 = t*t*t;
 	struct point v; // Interpolated point
     
-//	v.x = ((-t3 + 2*t2-t)*(p1.x) + (3*t3-5*t2+2)*(p2.x) + (-3*t3+4*t2+t)* (p3.x) + (t3-t2)*(p4.x))/2;
-//	v.y = ((-t3 + 2*t2-t)*(p1.y) + (3*t3-5*t2+2)*(p2.y) + (-3*t3+4*t2+t)* (p3.y) + (t3-t2)*(p4.y))/2;
-//  v.z = ((-t3 + 2*t2-t)*(p1.z) + (3*t3-5*t2+2)*(p2.z) + (-3*t3+4*t2+t)* (p3.z) + (t3-t2)*(p4.z))/2;
-    
     /* Catmull Rom spline Calculation */
     v.x = 0.5 * ((2*p2.x) + (-p1.x+p3.x) * t + (2*p1.x - 5*p2.x + 4*p3.x - p4.x) * t2 + (-p1.x+3*p2.x-3*p3.x + p4.x) * t3);
     v.y = 0.5 * ((2*p2.y) + (-p1.y+p3.y) * t + (2*p1.y - 5*p2.y + 4*p3.y - p4.y) * t2 + (-p1.y+3*p2.y-3*p3.y + p4.y) * t3);
@@ -203,7 +199,7 @@ void set_start_vector (point v1, point v2, vector tangent, vector &normal, vecto
     
     //Starting normal vector is calculated from tangent vector and arbitrary starting Vector V
     struct vector startV;
-    startV.x = 0;  startV.y = 1;  startV.z = 1;
+    startV.x = -1;  startV.y = 1;  startV.z = -1;
     
     //Normal Vector Computation
     normal = vector::cross_product(tangent, startV);
@@ -235,16 +231,17 @@ void display()
     float t;
     struct point v1, v2;	//Interpolated point
     struct point p1,p2,p3,p4;
+    double point_length, step_size = 0.02;
     
     drawScene();
     
     if (playCoaster){
-        if (tVal >= 0.98){
+        if (tVal >= 1 - step_size){
             tVal = 0;
             counter++;
         }
         else {
-            tVal += 0.02;
+            tVal += step_size;
         }
         
         p1 = g_Splines[0].points[counter];
@@ -252,9 +249,14 @@ void display()
         p3 = g_Splines[0].points[counter+2];
         p4 = g_Splines[0].points[counter+3];
         
-        v1 = CatmullRoll(tVal,p1,p2,p3,p4);
-        v2 = CatmullRoll(tVal + 0.02, p1, p2, p3, p4);
+        point_length = sqrt(pow(p3.x-p2.x, 2) + pow(p3.y-p2.y, 2) + pow(p3.z-p2.z, 2));
+        step_size = 2/point_length;
         
+        cout << point_length <<  " " << step_size << endl;
+        cout.flush();
+
+        v1 = CatmullRoll(tVal,p1,p2,p3,p4);
+        v2 = CatmullRoll(tVal + step_size, p1, p2, p3, p4);
         
         eyePoint.x = v1.x;
         eyePoint.y = v1.y;

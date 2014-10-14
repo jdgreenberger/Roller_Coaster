@@ -59,15 +59,15 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/canyon_texture.jpg"
+            argument = "$(SRCROOT)/Assign2/canyon_texture.jpg"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/sky3.jpg"
+            argument = "$(SRCROOT)/Assign2/sky3.jpg"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/steel.jpg"
+            argument = "$(SRCROOT)/Assign2/steel.jpg"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
