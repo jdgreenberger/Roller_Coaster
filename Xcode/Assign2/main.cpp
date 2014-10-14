@@ -252,8 +252,8 @@ void display()
         point_length = sqrt(pow(p3.x-p2.x, 2) + pow(p3.y-p2.y, 2) + pow(p3.z-p2.z, 2));
         step_size = 2/point_length;
         
-        cout << point_length <<  " " << step_size << endl;
-        cout.flush();
+//        cout << point_length <<  " " << step_size << endl;
+//        cout.flush();
 
         v1 = CatmullRoll(tVal,p1,p2,p3,p4);
         v2 = CatmullRoll(tVal + step_size, p1, p2, p3, p4);
@@ -416,13 +416,13 @@ int loadSplines(char *argv) {
     g_Splines = (struct spline *)malloc(g_iNumOfSplines * sizeof(struct spline));
     
     g_iNumOfSplines = 1;
-    /* reads through the spline files */
+    /* reads through the spline finexles */
     for (j = 0; j < g_iNumOfSplines; j++) {
         i = 0;
         fscanf(fileList, "%s", cName);
         fileSpline = fopen(cName, "r");
-        fileSpline = fopen("/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/Assign2/splines/myCoaster.sp", "r");
-        
+        fileSpline = fopen(argv, "r");
+       
         if (fileSpline == NULL) {
             printf ("can't open file\n");
             exit(1);
@@ -595,9 +595,9 @@ int main (int argc, char ** argv)
     
     //Texture Initialization
     glGenTextures(5, texture);
-    texload(0,argv[1]);
-    texload(1,argv[2]);
-    texload(2,argv[3]);
+    texload(0,argv[2]);
+    texload(1,argv[3]);
+    texload(2,argv[4]);
     
     myinit();
     

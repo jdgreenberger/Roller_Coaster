@@ -59,6 +59,10 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
+            argument = "$(SRCROOT)/Assign2/splines/myCoaster.sp"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "$(SRCROOT)/Assign2/canyon_texture.jpg"
             isEnabled = "YES">
          </CommandLineArgument>
