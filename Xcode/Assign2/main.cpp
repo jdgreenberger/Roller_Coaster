@@ -20,6 +20,7 @@ struct point {
     double z;
 };
 
+/* Class to represent A single vector's values and Standard Vector Functions*/
 struct vector: public point{
     static vector cross_product (vector v1, vector v2) {
         vector v3;
@@ -50,18 +51,12 @@ typedef enum { ROTATE, TRANSLATE, SCALE} CONTROLSTATE;
 CONTROLSTATE g_ControlState = ROTATE;
 
 
-/* state of the world */
-float g_vLandRotate[3] = {0.0, 0.0, 0.0};
-float g_vLandTranslate[3] = {0.0, 0.0, 0.0};
-float g_vLandScale[3] = {1.0, 1.0, 1.0};
-
 bool playCoaster = false;
-float heightmap [20] = {0.0, 3.0, 5.0, -4.0, 4.0, 2.0, 0.0, 3.0, 2.0, -1.0};
-struct point eyePoint;
-struct point centerPoint;
-struct point upVector;
-struct vector normal, binormal, tangent;
-struct vector normal2, binormal2, tangent2;
+struct point eyePoint;      // Used for camera orientation
+struct point centerPoint;   // Used for camera orientation
+struct point upVector;      // Used for camera orientation
+struct vector normal, binormal, tangent;    //Used for coaster motion
+struct vector normal2, binormal2, tangent2; //Used for rendering coaster track
 
 /* spline struct which contains how many control points, and an array of control points */
 struct spline {
@@ -69,14 +64,15 @@ struct spline {
     struct point *points;
 };
 
+//Function returns a point on a spline in between p2 and p3
 struct point CatmullRoll(float t, struct point p1, struct point p2, struct point p3, struct point p4)
 {
     
-	float t2 = t*t;
-	float t3 = t*t*t;
+	float t2 = t*t;     //t squared
+	float t3 = t*t*t;   //t cubed
 	struct point v; // Interpolated point
     
-    /* Catmull Rom spline Calculation */
+    // Catmull Rom spline Calculation
     v.x = 0.5 * ((2*p2.x) + (-p1.x+p3.x) * t + (2*p1.x - 5*p2.x + 4*p3.x - p4.x) * t2 + (-p1.x+3*p2.x-3*p3.x + p4.x) * t3);
     v.y = 0.5 * ((2*p2.y) + (-p1.y+p3.y) * t + (2*p1.y - 5*p2.y + 4*p3.y - p4.y) * t2 + (-p1.y+3*p2.y-3*p3.y + p4.y) * t3);
     v.z = 0.5 * ((2*p2.z) + (-p1.z+p3.z) * t + (2*p1.z - 5*p2.z + 4*p3.z - p4.z) * t2 + (-p1.z+3*p2.z-3*p3.z + p4.z) * t3);
@@ -84,14 +80,14 @@ struct point CatmullRoll(float t, struct point p1, struct point p2, struct point
 	return v;
 }
 
+//Used for obtaining the tangent vector
 struct vector CatmullRollDeriv(float t, struct point p1, struct point p2, struct point p3, struct point p4)
 {
 
 	float t2 = t*t;
-	struct vector v; // Interpolated point
+	struct vector v;
 
-	/* Catmull Rom spline Calculation */
-
+	//Derivative Calculation
 	v.x = ((-3*t2 + 4*t-1)*(p1.x) + (9*t2-10*t)*(p2.x) + (-9*t2+8*t+1)* (p3.x) + (3*t2-2*t)*(p4.x))/2;
     v.y = ((-3*t2 + 4*t-1)*(p1.y) + (9*t2-10*t)*(p2.y) + (-9*t2+8*t+1)* (p3.y) + (3*t2-2*t)*(p4.y))/2;
     v.z = ((-3*t2 + 4*t-1)*(p1.z) + (9*t2-10*t)*(p2.z) + (-9*t2+8*t+1)* (p3.z) + (3*t2-2*t)*(p4.z))/2;
@@ -107,7 +103,6 @@ int g_iNumOfSplines;
 void texload(int i,char *filename)
 {
     /* Texture Mapping Setup */
-    
     Pic* img;
     img = jpeg_read(filename, NULL);
     glBindTexture(GL_TEXTURE_2D, texture[i]);
@@ -171,11 +166,13 @@ void setImagePixel (int x, int y, float image_height, float image_width){
 }
 
 void drawScene (){
-    /* Draw Ground */
+   
+    //Texture Initialization
     glEnable(GL_TEXTURE_2D);
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
     glBindTexture(GL_TEXTURE_2D, texture[0]);
     
+     /* Draw Ground */
     for (int x = -100; x <= 80; x = x+50){
         for (int y = -100; y <=80; y = y+50){
             glBegin(GL_QUADS);
@@ -187,14 +184,18 @@ void drawScene (){
         }
     }
     
-    //SPHERE
+    //Texture map to SPHERE
     glBindTexture(GL_TEXTURE_2D, texture[1]);
     gluSphere(sphere, 200.0, 50, 50);
-        glDisable(GL_TEXTURE_2D);
+    
+    glDisable(GL_TEXTURE_2D);
 }
-float tVal = 0;
-int counter = 0;
 
+float tVal = 0;     //Value used for camera position on catmull rom spline
+float tVal2;            //value for track position on the spline
+int counter = 0;    //A counter to determine the next time to move the camera
+
+//Used as an initial calculation for determining normals & binormals
 void set_start_vector (point v1, point v2, vector tangent, vector &normal, vector &binormal){
     
     //Starting normal vector is calculated from tangent vector and arbitrary starting Vector V
@@ -222,13 +223,6 @@ void display()
               centerPoint.x, centerPoint.y, centerPoint.z,
               upVector.x, upVector.y, upVector.z);
     
-    glScalef(g_vLandScale[0], g_vLandScale[1], g_vLandScale[2]);    //scale based on x, y, z values
-    glTranslatef(g_vLandTranslate[0], g_vLandTranslate[1], g_vLandTranslate[2]); //translate object
-    glRotatef (g_vLandRotate[1], 0.0, 1.0, 0.0);    //rotate y dimension
-    glRotatef (g_vLandRotate[0], 1.0, 0.0, 0.0);    //rotate x dimension
-    glRotatef (g_vLandRotate[2], 0.0, 0.0, 1.0);    //rotate z dimension
-    
-    float t;
     struct point v1, v2;	//Interpolated point
     struct point p1,p2,p3,p4;
     double point_length, step_size = 0.02;
@@ -236,7 +230,7 @@ void display()
     drawScene();
     
     if (playCoaster){
-        if (tVal >= 1 - step_size){
+        if (tVal >= 1 - step_size){     //If we reach the end of current spline segment
             tVal = 0;
             counter++;
         }
@@ -255,6 +249,7 @@ void display()
         v1 = CatmullRoll(tVal,p1,p2,p3,p4);
         v2 = CatmullRoll(tVal + step_size, p1, p2, p3, p4);
         
+        //Camera position for GLUlookAt
         eyePoint.x = v1.x;
         eyePoint.y = v1.y;
         eyePoint.z = v1.z;
@@ -263,10 +258,12 @@ void display()
         tangent = CatmullRollDeriv(tVal, p1, p2, p3, p4);
         tangent.normalize();
         
+        //Camera focus point for GLUlookAt
         centerPoint.x = v1.x + tangent.x*10;
         centerPoint.y = v1.y + tangent.y*10;
         centerPoint.z = v1.z + tangent.z*10;
         
+        //If we are at the beginning of the ride
         if (counter == 0 && tVal <= 0.02) {
             set_start_vector(v1, v2, tangent, normal, binormal);
         }
@@ -281,35 +278,36 @@ void display()
             binormal = vector::cross_product(tangent, normal);
             binormal.normalize();
             
+            //Up vector for GLUlookat
             upVector.x = normal.x/30;
             upVector.y = normal.y;
             upVector.z = normal.z/10;
         }
     }
     
-    //DRAW TRACK
+    // --------- DRAW TRACK ---------- //
     
-    //LEFT RAIL
+   //Texture init
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture[2]);
+    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
+    
     for (int i = 0; i < g_Splines[0].numControlPoints-3; i++){
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, texture[2]);
-        glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
-
         glColor3d(0.4, 0.0, 0.0);
         p1 = g_Splines[0].points[i];
         p2 = g_Splines[0].points[i+1];
         p3 = g_Splines[0].points[i+2];
         p4 = g_Splines[0].points[i+3];
         int draw_cross = 0, draw_supports = 0;
-        for(t=0;t<1;t+=0.02)
+        for(tVal2 = 0; tVal2 < 1; tVal2 += 0.02)
         {
-            v1 = CatmullRoll(t,p1,p2,p3,p4);
-            v2 = CatmullRoll(t + 0.02, p1, p2, p3, p4);
+            v1 = CatmullRoll(tVal2,p1,p2,p3,p4);
+            v2 = CatmullRoll(tVal2 + 0.02, p1, p2, p3, p4);
             
             //Tangent Vector Computation ... Using first two points of the spline
-            tangent2 = CatmullRollDeriv(t, p1, p2, p3, p4);
+            tangent2 = CatmullRollDeriv(tVal2, p1, p2, p3, p4);
             tangent2.normalize();
-            if (i == 0 &&  t == 0) {
+            if (i == 0 &&  tVal2 == 0) {
                 set_start_vector(v1, v2, tangent2, normal2, binormal2);
             }
             else {
@@ -324,6 +322,8 @@ void display()
             binormal2 = vector::cross_product(tangent2, normal2);
             binormal2.normalize();
             }
+            
+            //Draw railings based on a narrow rectangle in between each two points
             
             //LEFT RAIL
             glBegin(GL_QUADS);
@@ -349,7 +349,7 @@ void display()
             glVertex3f(v1.x + binormal2.x + 0.1, v1.y+1 + binormal2.y + 0.1, v1.z + binormal2.z + 0.1);
             glEnd();
             
-            //CROSS BAR
+            //CROSS BAR — don't draw on every point
             if (draw_cross < 3){
                 draw_cross++;
             }
@@ -367,7 +367,7 @@ void display()
                 draw_cross = 0;
             }
             
-            //SUPPORTS
+            //SUPPORTS — draw infrequently
             if (draw_supports < 20)
                 draw_supports++;
             else {
@@ -467,51 +467,6 @@ void reshape(int w, int h)
     gluPerspective(60, 640/480, 0.01, 1000.0);  //dimensions of screen and z buffer
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-}
-
-/* converts mouse drags into information about
- rotation/translation/scaling */
-void mousedrag(int x, int y)
-{
-    int vMouseDelta[2] = {x-g_vMousePos[0], y-g_vMousePos[1]};
-    switch (g_ControlState)
-    {
-        case TRANSLATE:
-            if (g_iLeftMouseButton)
-            {
-                g_vLandTranslate[0] += vMouseDelta[0]*0.01;
-                g_vLandTranslate[1] -= vMouseDelta[1]*0.01;
-            }
-            if (g_iMiddleMouseButton)
-            {
-                g_vLandTranslate[2] += vMouseDelta[1]*0.01;
-            }
-            break;
-        case ROTATE:
-            if (g_iLeftMouseButton)
-            {
-                g_vLandRotate[0] += vMouseDelta[1];
-                g_vLandRotate[1] += vMouseDelta[0];
-            }
-            if (g_iMiddleMouseButton)
-            {
-                g_vLandRotate[2] += vMouseDelta[1];
-            }
-            break;
-        case SCALE:
-            if (g_iLeftMouseButton)
-            {
-                g_vLandScale[0] *= 1.0+vMouseDelta[0]*0.01;
-                g_vLandScale[1] *= 1.0-vMouseDelta[1]*0.01;
-            }
-            if (g_iMiddleMouseButton)
-            {
-                g_vLandScale[2] *= 1.0-vMouseDelta[1]*0.01;
-            }
-            break;
-    }
-    g_vMousePos[0] = x;
-    g_vMousePos[1] = y;
 }
 
 void mouseidle(int x, int y)
@@ -687,8 +642,6 @@ int main (int argc, char ** argv)
     /* replace with any animate code */
     glutIdleFunc(doIdle);
     
-    /* callback for mouse drags */
-    glutMotionFunc(mousedrag);
     /* callback for idle mouse movement */
     glutPassiveMotionFunc(mouseidle);
     /* callback for mouse button changes */
