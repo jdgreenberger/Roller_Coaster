@@ -249,12 +249,9 @@ void display()
         p3 = g_Splines[0].points[counter+2];
         p4 = g_Splines[0].points[counter+3];
         
-        point_length = sqrt(pow(p3.x-p2.x, 2) + pow(p3.y-p2.y, 2) + pow(p3.z-p2.z, 2));
-        step_size = 2/point_length;
+//        point_length = sqrt(pow(p3.x-p2.x, 2) + pow(p3.y-p2.y, 2) + pow(p3.z-p2.z, 2));
+//        step_size = 2/point_length;
         
-//        cout << point_length <<  " " << step_size << endl;
-//        cout.flush();
-
         v1 = CatmullRoll(tVal,p1,p2,p3,p4);
         v2 = CatmullRoll(tVal + step_size, p1, p2, p3, p4);
         
@@ -555,9 +552,75 @@ void mousebutton(int button, int state, int x, int y)
     g_vMousePos[1] = y;
 }
 
+//Screenshot variables
+int fileNum = 0;
+string screenshotName;
+
+/* Write a screenshot to the specified filename */
+void saveScreenshot (string file)
+{
+    string str_file = file;
+    char screenshotName [str_file.size()+1];
+    screenshotName[str_file.size()]=0;
+    memcpy(screenshotName,str_file.c_str(),str_file.size());
+    char num[10];
+    
+    sprintf(num, "%d", fileNum);
+    if (fileNum < 10)
+        strcat(screenshotName, "00");
+    else if (fileNum < 100)
+        strcat(screenshotName, "0");
+    strcat(screenshotName, num);
+    strcat(screenshotName, ".jpg");
+    fileNum++;    //increase screenshot count
+    
+    Pic *in = NULL;
+    
+    Pic *out = NULL;
+    
+    if (screenshotName == NULL)
+        return;
+    
+    in = pic_alloc(640, 480, 3, NULL);
+    
+    out = pic_alloc(640, 480, 3, NULL);
+    
+    printf("File to save to: %s\n", screenshotName);
+    
+    glReadPixels(0, 0, 640, 480, GL_RGB, GL_UNSIGNED_BYTE, &in->pix[0]);
+    
+    for ( int j=0; j<480; j++ ) {
+        
+        for ( int i=0; i<640; i++ ) {
+            
+            PIC_PIXEL(out, i, j, 0) = PIC_PIXEL(in, i, 480-1-j, 0);
+            
+            PIC_PIXEL(out, i, j, 1) = PIC_PIXEL(in, i, 480-1-j, 1);
+            
+            PIC_PIXEL(out, i, j, 2) = PIC_PIXEL(in, i, 480-1-j, 2);
+            
+        }
+        
+    }
+    
+    if (jpeg_write(screenshotName, out))
+        
+        printf("File saved Successfully\n");
+    
+    else
+        
+        printf("Error in Saving\n");
+    
+    pic_free(in);
+    
+    pic_free(out);
+    
+}
+
 /* takes keyboard input for extra functionality
  */
 
+int counter1 = 0;
 void keyboard(unsigned char key, int x, int y)
 {
     switch (key) {
@@ -567,6 +630,14 @@ void keyboard(unsigned char key, int x, int y)
         case '2':
             playCoaster = false;
             break;
+        case '3':
+            cout << " x = " << x << endl << endl;
+            cout.flush();
+            counter1++;
+            saveScreenshot(screenshotName);   //saves screenshot
+            if (counter1 >= 5)
+                playCoaster = true;
+            break;
         default:
             break;
     }
@@ -574,7 +645,7 @@ void keyboard(unsigned char key, int x, int y)
 
 int main (int argc, char ** argv)
 {
-    fileName = "./screenshots/";
+    screenshotName = "/Users/joshgreenberger/Documents/Graphics/assign2/Xcode/screenshots/";
     
     if (argc<2)
     {
