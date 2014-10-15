@@ -650,3 +650,38 @@ int main (int argc, char ** argv)
     glutMainLoop();
     return(0);
 }
+
+/*
+ double maxlinelength = 0.5, point_length = 0.02;
+void subdivide_line (float u1, float u2, point p1, point p2, point p3, point p4){
+    float umid = (u2-u1)/2;
+    point x1 = catmull_rom(u1, p1, p2, p3, p4);
+    point x2 = catmull_rom(u2, p1, p2, p3, p4);
+    float distance = sqrt(pow(abs(x2.x-x1.x), 2) + pow(abs(x2.y-x1.y), 2) + pow(abs(x2.z-x1.z), 2));
+    if (distance > maxlinelength){
+        subdivide_line(u1, u1+umid, p1, p2, p3, p4);
+        subdivide_line(u1+umid, u2, p1, p2, p3, p4);
+    }
+    else {
+        vertex_list.add(x1);
+    }
+}
+ 
+ my_init () {
+ //Determine Step sizes and store every vertex on splines in an array
+ struct point p1,p2,p3,p4;
+ for (int i = 0; i < g_Splines[0].numControlPoints-3; i++) {
+ p1 = g_Splines[0].points[i];
+ p2 = g_Splines[0].points[i+1];
+ p3 = g_Splines[0].points[i+2];
+ p4 = g_Splines[0].points[i+3];
+ subdivide_line(0, 1, p1, p2, p3, p4);
+ }
+
+ }
+ 
+ */
+
+
+
+
