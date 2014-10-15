@@ -229,7 +229,7 @@ void display()
     
     drawScene();
     
-    if (playCoaster){
+    if (playCoaster && counter < g_Splines[0].numControlPoints-4){
         if (tVal >= 1 - step_size){     //If we reach the end of current spline segment
             tVal = 0;
             counter++;
