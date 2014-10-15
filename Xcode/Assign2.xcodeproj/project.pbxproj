@@ -45,7 +45,7 @@
 		F96CF76A19D3292800CF668C /* yaxis.sp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = yaxis.sp; sourceTree = "<group>"; };
 		F96CF76B19D3292800CF668C /* zaxis.sp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = zaxis.sp; sourceTree = "<group>"; };
 		F97CAED119D28248000DA7E0 /* Assign2 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Assign2; sourceTree = BUILT_PRODUCTS_DIR; };
-		F97CAED419D28248000DA7E0 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		F97CAED419D28248000DA7E0 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = main.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		F97CAED619D28248000DA7E0 /* Assign2.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = Assign2.1; sourceTree = "<group>"; };
 		F9A8100619D74623009AFA9B /* myCoaster.sp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = myCoaster.sp; sourceTree = "<group>"; };
 		F9B3143819D607B2009E3D0B /* canyon_texture.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = canyon_texture.jpg; sourceTree = "<group>"; };

@@ -65,7 +65,7 @@ struct spline {
 };
 
 //Function returns a point on a spline in between p2 and p3
-struct point CatmullRoll(float t, struct point p1, struct point p2, struct point p3, struct point p4)
+struct point catmull_rom(float t, struct point p1, struct point p2, struct point p3, struct point p4)
 {
     
 	float t2 = t*t;     //t squared
@@ -76,17 +76,17 @@ struct point CatmullRoll(float t, struct point p1, struct point p2, struct point
     v.x = 0.5 * ((2*p2.x) + (-p1.x+p3.x) * t + (2*p1.x - 5*p2.x + 4*p3.x - p4.x) * t2 + (-p1.x+3*p2.x-3*p3.x + p4.x) * t3);
     v.y = 0.5 * ((2*p2.y) + (-p1.y+p3.y) * t + (2*p1.y - 5*p2.y + 4*p3.y - p4.y) * t2 + (-p1.y+3*p2.y-3*p3.y + p4.y) * t3);
     v.z = 0.5 * ((2*p2.z) + (-p1.z+p3.z) * t + (2*p1.z - 5*p2.z + 4*p3.z - p4.z) * t2 + (-p1.z+3*p2.z-3*p3.z + p4.z) * t3);
-                 
+    
 	return v;
 }
 
 //Used for obtaining the tangent vector
-struct vector CatmullRollDeriv(float t, struct point p1, struct point p2, struct point p3, struct point p4)
+struct vector catmull_rom_deriv(float t, struct point p1, struct point p2, struct point p3, struct point p4)
 {
-
+    
 	float t2 = t*t;
 	struct vector v;
-
+    
 	//Derivative Calculation
 	v.x = ((-3*t2 + 4*t-1)*(p1.x) + (9*t2-10*t)*(p2.x) + (-9*t2+8*t+1)* (p3.x) + (3*t2-2*t)*(p4.x))/2;
     v.y = ((-3*t2 + 4*t-1)*(p1.y) + (9*t2-10*t)*(p2.y) + (-9*t2+8*t+1)* (p3.y) + (3*t2-2*t)*(p4.y))/2;
@@ -166,13 +166,13 @@ void setImagePixel (int x, int y, float image_height, float image_width){
 }
 
 void drawScene (){
-   
+    
     //Texture Initialization
     glEnable(GL_TEXTURE_2D);
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
     glBindTexture(GL_TEXTURE_2D, texture[0]);
     
-     /* Draw Ground */
+    /* Draw Ground */
     for (int x = -100; x <= 80; x = x+50){
         for (int y = -100; y <=80; y = y+50){
             glBegin(GL_QUADS);
@@ -225,7 +225,7 @@ void display()
     
     struct point v1, v2;	//Interpolated point
     struct point p1,p2,p3,p4;
-    double point_length, step_size = 0.02;
+    double step_size = 0.02;
     
     drawScene();
     
@@ -243,11 +243,8 @@ void display()
         p3 = g_Splines[0].points[counter+2];
         p4 = g_Splines[0].points[counter+3];
         
-//        point_length = sqrt(pow(p3.x-p2.x, 2) + pow(p3.y-p2.y, 2) + pow(p3.z-p2.z, 2));
-//        step_size = 2/point_length;
-        
-        v1 = CatmullRoll(tVal,p1,p2,p3,p4);
-        v2 = CatmullRoll(tVal + step_size, p1, p2, p3, p4);
+        v1 = catmull_rom(tVal,p1,p2,p3,p4);
+        v2 = catmull_rom(tVal + step_size, p1, p2, p3, p4);
         
         //Camera position for GLUlookAt
         eyePoint.x = v1.x;
@@ -255,7 +252,7 @@ void display()
         eyePoint.z = v1.z;
         
         //Tangent Vector Computation
-        tangent = CatmullRollDeriv(tVal, p1, p2, p3, p4);
+        tangent = catmull_rom_deriv(tVal, p1, p2, p3, p4);
         tangent.normalize();
         
         //Camera focus point for GLUlookAt
@@ -287,7 +284,7 @@ void display()
     
     // --------- DRAW TRACK ---------- //
     
-   //Texture init
+    //Texture init
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, texture[2]);
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
@@ -301,26 +298,26 @@ void display()
         int draw_cross = 0, draw_supports = 0;
         for(tVal2 = 0; tVal2 < 1; tVal2 += 0.02)
         {
-            v1 = CatmullRoll(tVal2,p1,p2,p3,p4);
-            v2 = CatmullRoll(tVal2 + 0.02, p1, p2, p3, p4);
+            v1 = catmull_rom(tVal2,p1,p2,p3,p4);
+            v2 = catmull_rom(tVal2 + 0.02, p1, p2, p3, p4);
             
             //Tangent Vector Computation ... Using first two points of the spline
-            tangent2 = CatmullRollDeriv(tVal2, p1, p2, p3, p4);
+            tangent2 = catmull_rom_deriv(tVal2, p1, p2, p3, p4);
             tangent2.normalize();
             if (i == 0 &&  tVal2 == 0) {
                 set_start_vector(v1, v2, tangent2, normal2, binormal2);
             }
             else {
-            
-            //Compute new up vector (normal vector) based on previous vector
-            
-            //Normal Vector Computation
-            normal2 = vector::cross_product(binormal2, tangent2);
-            normal2.normalize();
-            
-            //Binormal Vector Computation
-            binormal2 = vector::cross_product(tangent2, normal2);
-            binormal2.normalize();
+                
+                //Compute new up vector (normal vector) based on previous vector
+                
+                //Normal Vector Computation
+                normal2 = vector::cross_product(binormal2, tangent2);
+                normal2.normalize();
+                
+                //Binormal Vector Computation
+                binormal2 = vector::cross_product(tangent2, normal2);
+                binormal2.normalize();
             }
             
             //Draw railings based on a narrow rectangle in between each two points
@@ -383,7 +380,7 @@ void display()
                 glVertex3f(v2.x + binormal2.x, v2.y+1 + binormal2.y, v2.z + binormal2.z);
                 glVertex3f(v2.x + binormal2.x, 0, v2.z + binormal2.z);
                 glEnd();
-               
+                
                 draw_supports = 0;
             }
         }
@@ -419,7 +416,7 @@ int loadSplines(char *argv) {
         fscanf(fileList, "%s", cName);
         fileSpline = fopen(cName, "r");
         fileSpline = fopen(argv, "r");
-       
+        
         if (fileSpline == NULL) {
             printf ("can't open file\n");
             exit(1);
